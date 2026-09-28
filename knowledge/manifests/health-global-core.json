@@ -2,12 +2,12 @@
   "pack": {
     "name": "Global Health Core",
     "slug": "health-global-core",
-    "description": "Maintained global public-health reference pack from the World Health Organization. It provides general health information and does not replace country-specific guidance or clinical care.",
+    "description": "Maintained global health reference pack from WHO and authoritative public medical-information sources. It supports general symptom, condition, test, medicine and prevention questions while remaining separate from individualized clinical care.",
     "kind": "curated",
     "bot_types": ["health"],
     "jurisdiction_country": null,
     "jurisdiction_region": null,
-    "version": "2026.09"
+    "version": "2026.09.1"
   },
   "sources": [
     {
@@ -24,6 +24,54 @@
       "publisher": "World Health Organization",
       "authority_level": "official",
       "license_type": "official-public-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "WHO Guidelines",
+      "canonical_url": "https://www.who.int/publications/who-guidelines",
+      "publisher": "World Health Organization",
+      "authority_level": "standard",
+      "license_type": "official-public-source-review-required",
+      "refresh_interval_hours": 24
+    },
+    {
+      "title": "WHO Publications",
+      "canonical_url": "https://www.who.int/publications",
+      "publisher": "World Health Organization",
+      "authority_level": "official",
+      "license_type": "official-public-source-review-required",
+      "refresh_interval_hours": 24
+    },
+    {
+      "title": "MedlinePlus Health Topics",
+      "canonical_url": "https://medlineplus.gov/healthtopics.html",
+      "publisher": "U.S. National Library of Medicine, National Institutes of Health",
+      "authority_level": "standard",
+      "license_type": "authoritative-government-health-reference-review-required",
+      "refresh_interval_hours": 24
+    },
+    {
+      "title": "MedlinePlus Medical Tests",
+      "canonical_url": "https://medlineplus.gov/lab-tests/",
+      "publisher": "U.S. National Library of Medicine, National Institutes of Health",
+      "authority_level": "standard",
+      "license_type": "authoritative-government-health-reference-review-required",
+      "refresh_interval_hours": 24
+    },
+    {
+      "title": "MedlinePlus Drugs, Herbs and Supplements",
+      "canonical_url": "https://medlineplus.gov/druginformation.html",
+      "publisher": "U.S. National Library of Medicine, National Institutes of Health",
+      "authority_level": "standard",
+      "license_type": "authoritative-health-reference-review-required",
+      "refresh_interval_hours": 24
+    },
+    {
+      "title": "MedlinePlus Medical Encyclopedia",
+      "canonical_url": "https://medlineplus.gov/encyclopedia.html",
+      "publisher": "U.S. National Library of Medicine, National Institutes of Health",
+      "authority_level": "reference",
+      "license_type": "authoritative-health-reference-review-required",
       "refresh_interval_hours": 168
     },
     {

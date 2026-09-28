@@ -1,9 +1,9 @@
-import { consumeStream, convertToModelMessages, createIdGenerator, safeValidateUIMessages, streamText, type UIMessage } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { consumeStream, convertToModelMessages, createIdGenerator, safeValidateUIMessages, stepCountIs, streamText, type UIMessage } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth";
 import { languageModel } from "@/lib/ai/models";
+import { webSearchTools } from "@/lib/ai/web-search";
 import { buildSystemPrompt, type BotRecord } from "@/lib/bots/system-prompt";
 import { retrieveChunks, chunksToContext, startQueryEmbedding, type RetrievalMetrics } from "@/lib/rag/retrieve";
 import { assertUsageAvailable } from "@/lib/security/usage";
@@ -13,8 +13,6 @@ import { env } from "@/lib/env";
 
 export const maxDuration = 60;
 const bodySchema = z.object({ messages: z.array(z.unknown()).min(1).max(100), botId: z.string().uuid(), conversationId: z.string().uuid(), webSearch: z.boolean().default(false) });
-const webSearchTool = openai.tools.webSearch({ searchContextSize: "medium" });
-const validationTools = { web_search: webSearchTool };
 
 function latestUserText(messages: UIMessage[]) {
   const message = [...messages].reverse().find((item) => item.role === "user");
@@ -48,7 +46,9 @@ export async function POST(req: Request) {
     const parsed = bodySchema.safeParse(raw);
     if (!parsed.success) return NextResponse.json({ error: "Invalid chat request" }, { status: 400 });
 
-    const validated = await safeValidateUIMessages({ messages: parsed.data.messages, tools: validationTools });
+    // Keep the tool schema available during validation so conversations that already
+    // contain web-search tool parts remain valid even when Web is off for this turn.
+    const validated = await safeValidateUIMessages({ messages: parsed.data.messages, tools: webSearchTools });
     if (!validated.success) return NextResponse.json({ error: "Invalid chat message structure" }, { status: 400 });
     const messages = validated.data;
     const query = latestUserText(messages);
@@ -78,7 +78,6 @@ export async function POST(req: Request) {
     const { data: conversation } = conversationResult;
     if (botError || !bot) return NextResponse.json({ error: "Assistant not found" }, { status: 404 });
     if (!conversation) return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
-    if (parsed.data.webSearch && !bot.web_enabled) return NextResponse.json({ error: "Web search is disabled for this assistant" }, { status: 403 });
 
     const retrievalPromise = query
       ? retrieveChunks(supabase, bot.id, query, conversation.id, embeddingPromise)
@@ -92,8 +91,14 @@ export async function POST(req: Request) {
     ]);
 
     const ragContext = chunksToContext(chunks);
-    const system = buildSystemPrompt(bot as BotRecord, ragContext, portfolioContext, profile?.global_instructions);
-    const tools = parsed.data.webSearch ? validationTools : undefined;
+    const system = buildSystemPrompt(
+      bot as BotRecord,
+      ragContext,
+      portfolioContext,
+      profile?.global_instructions,
+      parsed.data.webSearch,
+    );
+    const tools = parsed.data.webSearch ? webSearchTools : undefined;
     const modelHistory = messages.slice(-env.CHAT_HISTORY_MESSAGES);
     const modelMessages = await convertToModelMessages(modelHistory);
     const preModelMs = Date.now() - requestStartedAt;
@@ -105,6 +110,9 @@ export async function POST(req: Request) {
       system,
       messages: modelMessages,
       tools,
+      // One model step is enough normally. When Web is enabled, allow the model
+      // to search and then consume the tool result before producing its answer.
+      stopWhen: stepCountIs(parsed.data.webSearch ? 3 : 1),
       maxRetries: 2,
       abortSignal: req.signal,
       onChunk: ({ chunk }) => {
