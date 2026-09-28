@@ -9,7 +9,6 @@ import { ArrowUp, Check, Copy, FileText, Globe2, Loader2, MessageSquarePlus, Pap
 import { toast } from "sonner";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import { AssistantIcon } from "@/components/app/assistant-icon";
-import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/lib/supabase/client";
 
 export type ChatBotInfo = {
@@ -163,7 +162,6 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
           <div className="min-w-0"><div className="truncate text-[13px] font-medium sm:text-sm">{bot.name}</div><div className="mt-0.5 hidden truncate text-[10px] text-subtle-foreground sm:block">{locationLabel}</div></div>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          {bot.web_enabled ? <div className="mr-1 flex h-9 items-center gap-2 rounded-lg border border-border bg-surface-soft px-2.5 text-[11px] text-muted-foreground"><Globe2 className="size-3.5" /><span className="hidden sm:inline">Web</span><Switch checked={web} onCheckedChange={setWeb} /></div> : null}
           <IconButton label="New chat" onClick={() => void newChat()}><MessageSquarePlus className="size-4" /></IconButton>
           <Link aria-label="Assistant settings" title="Assistant settings" href={`/app/bots/${bot.id}/settings`} className="grid size-9 place-items-center rounded-lg text-muted-foreground hover:bg-white/[.04] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35"><Settings2 className="size-4" /></Link>
         </div>
@@ -206,7 +204,7 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
             );
           })}
 
-          {status === "submitted" ? <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-3.5 animate-spin" />Retrieving relevant sources…</div> : null}
+          {status === "submitted" ? <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-3.5 animate-spin" />{web ? "Checking sources and the web…" : "Thinking…"}</div> : null}
           <div ref={endRef} />
         </div>
       </div>
@@ -224,10 +222,26 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
           >
             {attachments.length ? <div className="flex flex-wrap gap-1.5 px-1.5 pb-1.5">{attachments.map((item) => <div key={item.id} className="flex max-w-full items-center gap-1.5 rounded-md border border-border bg-surface-raised px-2 py-1.5 text-[10px] text-muted-foreground"><FileText className="size-3.5 shrink-0" /><span className="max-w-48 truncate">{item.name}</span><span className={item.status === "ready" ? "text-emerald-300/80" : item.status === "failed" ? "text-red-300/80" : "text-amber-200/70"}>{item.status === "ready" ? "Ready" : item.status === "failed" ? "Failed" : "Processing"}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => void removeAttachment(item.id)} className="rounded p-0.5 hover:bg-white/[.05]"><X className="size-3" /></button></div>)}</div> : null}
             <textarea value={input} onChange={(event) => setInput(event.target.value)} onPaste={(event) => { const files = Array.from(event.clipboardData.files || []); if (files.length) { event.preventDefault(); void uploadFiles(files); } }} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submit(); } }} rows={1} placeholder={dragging ? "Drop files to attach to this conversation" : placeholder} className="max-h-40 min-h-12 w-full resize-none bg-transparent px-2.5 py-2.5 text-[16px] leading-6 outline-none placeholder:text-subtle-foreground sm:text-sm" />
-            <div className="flex items-center justify-between px-0.5"><IconButton label="Attach files" disabled={uploading} onClick={() => fileInputRef.current?.click()}>{uploading ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}</IconButton>{busy ? <button type="button" aria-label="Stop generating" title="Stop generating" onClick={() => stop()} className="grid size-9 place-items-center rounded-full bg-primary text-white hover:bg-primary-hover"><Square className="size-3.5 fill-current" /></button> : <button type="submit" aria-label="Send message" title="Send message" disabled={!input.trim()} className="grid size-9 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-muted disabled:text-subtle-foreground"><ArrowUp className="size-[17px]" /></button>}</div>
+            <div className="flex items-center justify-between px-0.5">
+              <div className="flex items-center gap-1">
+                <IconButton label="Attach files" disabled={uploading} onClick={() => fileInputRef.current?.click()}>{uploading ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}</IconButton>
+                <button
+                  type="button"
+                  aria-label={web ? "Turn off web search" : "Turn on web search"}
+                  aria-pressed={web}
+                  title={web ? "Web search on" : "Web search off"}
+                  onClick={() => setWeb((current) => !current)}
+                  className={`flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 ${web ? "bg-primary/15 text-[#9fc0ff] ring-1 ring-inset ring-primary/30 hover:bg-primary/20" : "text-muted-foreground hover:bg-white/[.04] hover:text-foreground"}`}
+                >
+                  <Globe2 className="size-4" />
+                  <span>Web</span>
+                </button>
+              </div>
+              {busy ? <button type="button" aria-label="Stop generating" title="Stop generating" onClick={() => stop()} className="grid size-9 place-items-center rounded-full bg-primary text-white hover:bg-primary-hover"><Square className="size-3.5 fill-current" /></button> : <button type="submit" aria-label="Send message" title="Send message" disabled={!input.trim()} className="grid size-9 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-muted disabled:text-subtle-foreground"><ArrowUp className="size-[17px]" /></button>}
+            </div>
           </form>
           {indexing ? <p className="mt-1.5 text-center text-[10px] leading-4 text-[#a29578]">Attached files are conversation-only. Use them after they show Ready.</p> : null}
-          <p className="mt-1.5 text-center text-[9px] leading-4 text-subtle-foreground sm:text-[10px]">Verify important claims against the cited source material.</p>
+          <p className="mt-1.5 text-center text-[9px] leading-4 text-subtle-foreground sm:text-[10px]">{web ? "Web is on for new messages. Verify important claims against linked sources." : "Web is off by default. Turn it on when you want fresh external information."}</p>
         </div>
       </div>
     </div>

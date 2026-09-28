@@ -28,7 +28,6 @@ export function BotSettingsForm({ bot, publicPacks = [], linkedPackIds = [] }: {
   const [instructions, setInstructions] = useState(bot.instructions || "");
   const [country, setCountry] = useState(bot.jurisdiction_country || "");
   const [region, setRegion] = useState(bot.jurisdiction_region || "");
-  const [webEnabled, setWebEnabled] = useState(bot.web_enabled);
   const [followGlobal, setFollowGlobal] = useState(Boolean(bot.follow_profile_jurisdiction));
   const [selectedPackIds, setSelectedPackIds] = useState(() => new Set(linkedPackIds));
   const [packQuery, setPackQuery] = useState("");
@@ -56,7 +55,6 @@ export function BotSettingsForm({ bot, publicPacks = [], linkedPackIds = [] }: {
           name, description, instructions,
           country: locationAware && !followGlobal ? country || null : undefined,
           region: locationAware && !followGlobal ? region || null : undefined,
-          webEnabled,
           followGlobalJurisdiction: canFollowGlobal ? followGlobal : undefined,
           packIds: isCustom ? [...selectedPackIds] : undefined,
         }),
@@ -72,7 +70,7 @@ export function BotSettingsForm({ bot, publicPacks = [], linkedPackIds = [] }: {
   function restorePreset() {
     if (!bot.is_builtin || !isPresetKey(bot.bot_type)) return;
     const preset = BOT_PRESETS[bot.bot_type];
-    setName(preset.name); setDescription(preset.description); setInstructions(""); setWebEnabled(preset.webDefault);
+    setName(preset.name); setDescription(preset.description); setInstructions("");
     toast.message("Preset defaults restored in the form. Jurisdiction preferences are unchanged.");
   }
 
@@ -150,8 +148,8 @@ export function BotSettingsForm({ bot, publicPacks = [], linkedPackIds = [] }: {
           </div>
         ) : null}
 
-        <div className="border-t border-border p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-5"><div><div className="text-sm font-medium text-foreground">Allow live web search</div><div className="mt-1 text-xs leading-5 text-muted-foreground">Makes web search available as an optional control in this assistant’s conversations.</div></div><Switch checked={webEnabled} onCheckedChange={setWebEnabled} /></div>
+        <div className="border-t border-border bg-surface-soft px-5 py-4 sm:px-6">
+          <p className="text-xs leading-5 text-muted-foreground">Live web search is available directly in every conversation from the Web button beside the attachment control. It is off by default for each chat.</p>
         </div>
 
         <div className="flex justify-end border-t border-border bg-surface-soft p-4 sm:px-6"><Button disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button></div>

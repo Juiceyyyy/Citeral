@@ -7,7 +7,6 @@ import { BOT_PRESETS } from "@/lib/bots/presets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Surface, SectionHeading } from "@/components/app/page-shell";
 
 const CUSTOM = BOT_PRESETS.custom;
@@ -17,7 +16,6 @@ export function CreateBotForm() {
   const [name, setName] = useState(CUSTOM.name);
   const [description, setDescription] = useState(CUSTOM.description);
   const [instructions, setInstructions] = useState("");
-  const [webEnabled, setWebEnabled] = useState(CUSTOM.webDefault);
   const [loading, setLoading] = useState(false);
 
   async function submit(event: React.FormEvent) {
@@ -26,7 +24,7 @@ export function CreateBotForm() {
     const response = await fetch("/api/bots", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, description, instructions, botType: "custom", country: null, region: null, webEnabled }),
+      body: JSON.stringify({ name, description, instructions, botType: "custom", country: null, region: null }),
     });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) { toast.error(body.error || "Could not create assistant"); setLoading(false); return; }
@@ -52,10 +50,7 @@ export function CreateBotForm() {
         </div>
 
         <div className="border-t border-border p-5 sm:p-6">
-          <div className="flex items-center justify-between gap-5">
-            <div><div className="text-sm font-medium text-foreground">Allow live web search</div><div className="mt-1 text-xs leading-5 text-muted-foreground">Makes web search available as an optional conversation control.</div></div>
-            <Switch checked={webEnabled} onCheckedChange={setWebEnabled} />
-          </div>
+          <SectionHeading title="Web search" description="Every conversation includes a Web button next to attachments. It starts off by default and can be enabled for any message that needs fresh external information." />
         </div>
 
         <div className="flex justify-end border-t border-border bg-surface-soft p-4 sm:px-6">

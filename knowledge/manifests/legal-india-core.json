@@ -2,17 +2,17 @@
   "pack": {
     "name": "India Legal Core",
     "slug": "legal-india-core",
-    "description": "Core India legal authorities from official Government of India sources. This is a maintained foundation pack, not a claim of complete coverage of Indian law.",
+    "description": "Maintained primary-law foundation for common India legal questions: constitutional, contract, criminal, evidence, civil procedure, property, family, consumer, company, arbitration, limitation, data protection, real-estate and domestic-violence law. Current amendments and case law still require source verification where material.",
     "kind": "jurisdiction",
     "bot_types": ["legal"],
     "jurisdiction_country": "India",
     "jurisdiction_region": null,
-    "version": "2026.09"
+    "version": "2026.09.1"
   },
   "sources": [
     {
       "title": "Constitution of India",
-      "canonical_url": "https://www.legislative.gov.in/static/uploads/2025/07/88cca69e868e50b217f855be2fb8bdba.pdf",
+      "canonical_url": "https://legislative.gov.in/constitution-of-india/",
       "publisher": "Legislative Department, Ministry of Law and Justice, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
@@ -20,7 +20,7 @@
     },
     {
       "title": "Indian Contract Act, 1872",
-      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/2187/2/A187209.pdf",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/2187/1/A1872-09.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
@@ -28,15 +28,15 @@
     },
     {
       "title": "Information Technology Act, 2000",
-      "canonical_url": "https://www.meity.gov.in/static/uploads/2024/02/ITAct_0-1.pdf",
-      "publisher": "Ministry of Electronics and Information Technology, Government of India",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1999/3/A2000-21.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
     },
     {
       "title": "Consumer Protection Act, 2019",
-      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/16939/1/a2019-35.pdf",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/15256/1/A2019-35.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
@@ -44,24 +44,24 @@
     },
     {
       "title": "Bharatiya Nyaya Sanhita, 2023",
-      "canonical_url": "https://www.mha.gov.in/sites/default/files/2024-04/250883_english_01042024.pdf",
-      "publisher": "Ministry of Home Affairs, Government of India",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/20062/1/A2023-45.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
     },
     {
       "title": "Bharatiya Nagarik Suraksha Sanhita, 2023",
-      "canonical_url": "https://www.mha.gov.in/sites/default/files/2024-04/250884_2_english_01042024.pdf",
-      "publisher": "Ministry of Home Affairs, Government of India",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/20099/1/A2023-46.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
     },
     {
       "title": "Bharatiya Sakshya Adhiniyam, 2023",
-      "canonical_url": "https://www.mha.gov.in/sites/default/files/2024-04/250882_english_01042024_0.pdf",
-      "publisher": "Ministry of Home Affairs, Government of India",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/20063/1/A2023-47.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
@@ -70,6 +70,110 @@
       "title": "Companies Act, 2013",
       "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/15198/1/the_companies_act%2C_2013_no._18_of_2013_date_29.08.2013.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Code of Civil Procedure, 1908",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/2191/1/aA1908-05.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Specific Relief Act, 1963",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1583/7/A1963-47.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Limitation Act, 1963",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1565/5/A1963-36.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Transfer of Property Act, 1882",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/14648/1/tpa.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Real Estate (Regulation and Development) Act, 2016",
+      "canonical_url": "https://www.indiacode.nic.in/indiacode/bitstream/123456789/2158/1/A201616.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Digital Personal Data Protection Act, 2023",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/22037/2/a2023-22.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Arbitration and Conciliation Act, 1996",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1978/3/a1996-26.pdf?fm=pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Hindu Marriage Act, 1955",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1560/1/A1955-25.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Hindu Succession Act, 1956",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1713/1/AAA1956suc___30.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Special Marriage Act, 1954",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1387/1/A1954-43E.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Protection of Women from Domestic Violence Act, 2005",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/2021/5/A2005-43.pdf",
+      "publisher": "India Code, Legislative Department, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "Right to Information Act, 2005",
+      "canonical_url": "https://www.indiacode.nic.in/indiacode/handle/123456789/13072?view_type=browse",
+      "publisher": "India Code / National Informatics Centre",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168
+    },
+    {
+      "title": "National Legal Services Authority - Legal Services",
+      "canonical_url": "https://nalsa.gov.in/legal-services/",
+      "publisher": "National Legal Services Authority",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
