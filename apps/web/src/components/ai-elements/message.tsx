@@ -18,7 +18,7 @@ export const Message = ({ className, from, ...props }: MessageProps) => (
 
 export type MessageContentProps = HTMLAttributes<HTMLDivElement>;
 export const MessageContent = ({ className, ...props }: MessageContentProps) => (
-  <div className={cn("min-w-0 max-w-full overflow-hidden text-sm", className)} {...props} />
+  <div className={cn("min-w-0 max-w-full overflow-hidden text-[16px] leading-7", className)} {...props} />
 );
 
 export type MessageResponseProps = ComponentProps<typeof Streamdown>;

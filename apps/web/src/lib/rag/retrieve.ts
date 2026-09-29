@@ -30,7 +30,9 @@ function adaptiveMatchCount(query: string) {
   const words = normalized.split(/\s+/).filter(Boolean).length;
   const complex = /\b(compare|analyse|analyze|explain|summari[sz]e|across|multiple|all documents|deep|comprehensive|research|implications|differences|pros and cons)\b/.test(normalized);
   const medium = /\b(why|how|calculate|requirements?|rules?|section|regulation|tax|legal|accounting|health)\b/.test(normalized);
-  const requested = complex || words > 45 ? 10 : medium || words > 22 ? 7 : 4;
+  // Most questions only need a few high-quality chunks. Keeping the prompt smaller
+  // reduces model prefill/TTFT while still allowing deeper requests to retrieve more.
+  const requested = complex || words > 45 ? 7 : medium || words > 22 ? 5 : 3;
   return Math.max(1, Math.min(env.MAX_RAG_CHUNKS, requested));
 }
 

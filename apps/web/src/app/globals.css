@@ -147,14 +147,14 @@ button { transition: color .16s ease, background-color .16s ease, border-color .
   50% { transform: translateY(5px); opacity: 1; }
 }
 
-.prose-ai { color: #dfe3e8; line-height: 1.72; }
+.prose-ai { color: #dfe3e8; font-size: 1.025rem; line-height: 1.78; }
 .prose-ai h1,.prose-ai h2,.prose-ai h3 { color: #f7f8f9; font-weight: 620; margin: 1.2em 0 .55em; letter-spacing: -.018em; }
 .prose-ai h1 { font-size: 1.4rem; }
 .prose-ai h2 { font-size: 1.18rem; }
 .prose-ai h3 { font-size: 1.02rem; }
-.prose-ai p { margin: .68em 0; }
-.prose-ai ul,.prose-ai ol { padding-left: 1.35rem; margin: .7em 0; }
-.prose-ai li { margin: .25em 0; }
+.prose-ai p { margin: .72em 0; }
+.prose-ai ul,.prose-ai ol { padding-left: 1.35rem; margin: .72em 0; }
+.prose-ai li { margin: .28em 0; }
 .prose-ai code { background:#171a20; border:1px solid #2a2f38; border-radius:.35rem; padding:.08rem .28rem; }
 .prose-ai pre { overflow:auto; padding:1rem; background:#0d0f12; border:1px solid #252a32; border-radius:.7rem; }
 .prose-ai a { color:#a9c6ff; text-decoration: underline; text-underline-offset: 3px; }
@@ -179,6 +179,6 @@ button { transition: color .16s ease, background-color .16s ease, border-color .
     -webkit-backdrop-filter: blur(18px) saturate(126%);
     backdrop-filter: blur(18px) saturate(126%);
   }
-  .prose-ai { font-size: .9375rem; line-height: 1.68; }
+  .prose-ai { font-size: 1rem; line-height: 1.76; }
   .prose-ai pre { margin-inline: -.25rem; padding: .8rem; }
 }

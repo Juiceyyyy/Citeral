@@ -24,6 +24,15 @@ function latestUserText(messages: UIMessage[]) {
     .slice(0, 16_000);
 }
 
+function responseTokenBudget(query: string) {
+  const normalized = query.trim().toLowerCase();
+  const words = normalized.split(/\s+/).filter(Boolean).length;
+  const asksForDepth = /\b(comprehensive|detailed|in[- ]depth|deep dive|thorough|full analysis|long[- ]form|step[- ]by[- ]step|everything|exhaustive)\b/.test(normalized);
+  if (asksForDepth || words > 90) return 1_600;
+  if (words < 16) return 800;
+  return 1_100;
+}
+
 const EMPTY_RETRIEVAL_METRICS: RetrievalMetrics = {
   embeddingMs: 0,
   retrievalMs: 0,
@@ -52,6 +61,7 @@ export async function POST(req: Request) {
     if (!validated.success) return NextResponse.json({ error: "Invalid chat message structure" }, { status: 400 });
     const messages = validated.data;
     const query = latestUserText(messages);
+    const maxOutputTokens = responseTokenBudget(query);
 
     const embeddingPromise = startQueryEmbedding(query);
     const accessStartedAt = Date.now();
@@ -110,10 +120,13 @@ export async function POST(req: Request) {
       system,
       messages: modelMessages,
       tools,
+      // Keep routine chat concise enough to stream quickly. Explicitly detailed
+      // questions receive a larger budget via responseTokenBudget().
+      maxOutputTokens,
       // One model step is enough normally. When Web is enabled, allow the model
       // to search and then consume the tool result before producing its answer.
       stopWhen: stepCountIs(parsed.data.webSearch ? 3 : 1),
-      maxRetries: 2,
+      maxRetries: 1,
       abortSignal: req.signal,
       onChunk: ({ chunk }) => {
         if (firstTextAt === null && chunk.type === "text-delta" && chunk.text.length > 0) {
@@ -153,6 +166,8 @@ export async function POST(req: Request) {
             generation_ms: streamFinishedAt - modelStartedAt,
             total_ms: Date.now() - requestStartedAt,
             history_messages: modelHistory.length,
+            max_output_tokens: maxOutputTokens,
+            fast_reasoning_mode: env.CLOUDFLARE_AI_MODEL === "@cf/zai-org/glm-4.7-flash",
             web_search: parsed.data.webSearch,
             aborted: isAborted,
           },
