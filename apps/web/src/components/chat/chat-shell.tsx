@@ -31,6 +31,10 @@ function IconButton({ label, children, onClick, disabled, className = "" }: { la
   return <button type="button" aria-label={label} title={label} onClick={onClick} disabled={disabled} className={`grid size-9 place-items-center rounded-lg text-muted-foreground transition hover:bg-white/[.04] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}>{children}</button>;
 }
 
+function formatElapsed(ms: number) {
+  return `${(Math.max(0, ms) / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
+}
+
 export function ChatShell({ bot, conversationId, initialMessages, initialAttachments, starterPrompts, welcomeTitle, welcomeBody, placeholder }: {
   bot: ChatBotInfo;
   conversationId: string;
@@ -50,16 +54,41 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [savingMessageId, setSavingMessageId] = useState<string | null>(null);
+  const [thinkingStartedAt, setThinkingStartedAt] = useState<number | null>(null);
+  const [thinkingElapsedMs, setThinkingElapsedMs] = useState(0);
+  const [lastThinkingMs, setLastThinkingMs] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const requestMessageCountRef = useRef(initialMessages.length);
+  const messagesRef = useRef(initialMessages);
+  const statusRef = useRef<string>("ready");
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
   const { messages, setMessages, sendMessage, status, error, stop } = useChat({ id: conversationId, messages: initialMessages, transport });
+  messagesRef.current = messages;
+  statusRef.current = status;
   const busy = status === "streaming" || status === "submitted";
   const emptyConversation = messages.length === 0;
   const indexing = attachments.some((item) => item.status === "queued" || item.status === "processing");
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, status]);
   useEffect(() => { if (error) toast.error(error.message); }, [error]);
+
+  useEffect(() => {
+    if (thinkingStartedAt === null) return;
+    const timer = window.setInterval(() => {
+      const elapsed = Date.now() - thinkingStartedAt;
+      const freshAssistantText = messagesRef.current
+        .slice(requestMessageCountRef.current)
+        .some((message) => message.role === "assistant" && messageText(message).trim().length > 0);
+      const currentStatus = statusRef.current;
+      setThinkingElapsedMs(elapsed);
+      if (freshAssistantText || currentStatus === "ready" || currentStatus === "error") {
+        setLastThinkingMs(elapsed);
+        setThinkingStartedAt(null);
+      }
+    }, 100);
+    return () => window.clearInterval(timer);
+  }, [thinkingStartedAt]);
 
   useEffect(() => {
     if (!indexing) return;
@@ -82,6 +111,10 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
   async function submit(text = input) {
     const value = text.trim();
     if (!value || busy) return;
+    requestMessageCountRef.current = messages.length;
+    setThinkingStartedAt(Date.now());
+    setThinkingElapsedMs(0);
+    setLastThinkingMs(null);
     setInput("");
     await sendMessage({ text: value }, { body: { botId: bot.id, conversationId, webSearch: web } });
     router.refresh();
@@ -153,6 +186,7 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
   }
 
   const locationLabel = bot.jurisdiction_country ? `${bot.jurisdiction_country}${bot.jurisdiction_region ? ` · ${bot.jurisdiction_region}` : ""}` : "Grounded assistant";
+  const thinkingLabel = web ? "Searching & thinking" : "Thinking";
 
   return (
     <div className="flex h-[calc(100dvh-5rem)] min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-surface lg:h-[calc(100dvh-3.5rem)]">
@@ -168,15 +202,15 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-5 sm:px-6 md:px-8 md:py-7">
-        <div className="mx-auto w-full max-w-[820px] space-y-5 sm:space-y-6">
+        <div className="mx-auto w-full max-w-[860px] space-y-5 sm:space-y-6">
           {emptyConversation ? (
             <div className="flex min-h-[40vh] flex-col justify-end pb-3 pt-10 sm:min-h-[44vh] sm:pb-5">
               <AssistantIcon type={bot.bot_type} className="size-10 rounded-xl" />
               <h1 className="mt-5 max-w-2xl text-[26px] font-semibold leading-tight tracking-[-0.035em] sm:text-[30px]">{welcomeTitle}</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">{welcomeBody}</p>
+              <p className="mt-3 max-w-2xl text-[15px] leading-6 text-muted-foreground sm:text-base sm:leading-7">{welcomeBody}</p>
               <div className="mt-7 grid gap-2 sm:grid-cols-2">
                 {starterPrompts.slice(0, 4).map((prompt) => (
-                  <button type="button" onClick={() => void submit(prompt)} key={prompt} className="min-h-16 rounded-lg border border-border bg-surface-soft px-3.5 py-3 text-left text-xs leading-5 text-[#b7bdc7] transition hover:border-border-strong hover:bg-surface-raised hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35">{prompt}</button>
+                  <button type="button" onClick={() => void submit(prompt)} key={prompt} className="min-h-16 rounded-lg border border-border bg-surface-soft px-3.5 py-3 text-left text-[13px] leading-5 text-[#b7bdc7] transition hover:border-border-strong hover:bg-surface-raised hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/35 sm:text-sm">{prompt}</button>
                 ))}
               </div>
             </div>
@@ -187,15 +221,15 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
             const text = messageText(message);
             return (
               <Message from={message.role} key={message.id}>
-                <MessageContent className={message.role === "user" ? "max-w-[88%] rounded-xl bg-[#e7edf6] px-3.5 py-2.5 text-sm leading-6 text-[#172033] sm:max-w-[78%] sm:px-4 sm:py-3" : "w-full text-sm"}>
+                <MessageContent className={message.role === "user" ? "max-w-[90%] rounded-xl bg-[#e7edf6] px-3.5 py-2.5 text-[16px] leading-7 text-[#172033] sm:max-w-[78%] sm:px-4 sm:py-3" : "w-full text-[16px] leading-7"}>
                   {editing ? (
                     <div className="min-w-[min(70vw,22rem)] sm:min-w-80">
-                      <textarea autoFocus value={editText} onChange={(event) => setEditText(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { setEditingMessageId(null); setEditText(""); } if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void saveEdit(message.id); } }} rows={Math.min(8, Math.max(2, editText.split("\n").length))} className="max-h-48 w-full resize-none bg-transparent text-sm leading-6 text-[#172033] outline-none" />
+                      <textarea autoFocus value={editText} onChange={(event) => setEditText(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { setEditingMessageId(null); setEditText(""); } if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void saveEdit(message.id); } }} rows={Math.min(8, Math.max(2, editText.split("\n").length))} className="max-h-48 w-full resize-none bg-transparent text-[16px] leading-7 text-[#172033] outline-none" />
                       <div className="mt-2 flex justify-end gap-1.5"><button type="button" aria-label="Cancel edit" onClick={() => { setEditingMessageId(null); setEditText(""); }} className="grid size-7 place-items-center rounded-full bg-[#d3dce9] text-[#445064] hover:bg-[#c9d4e3]"><X className="size-3.5" /></button><button type="button" aria-label="Save message edit" disabled={!editText.trim() || savingMessageId === message.id} onClick={() => void saveEdit(message.id)} className="grid size-7 place-items-center rounded-full bg-[#2e6fdd] text-white hover:bg-[#2865cc] disabled:opacity-50">{savingMessageId === message.id ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}</button></div>
                     </div>
                   ) : message.parts.map((part, index) => {
                     if (part.type === "text") return message.role === "assistant" ? <MessageResponse key={index}>{part.text}</MessageResponse> : <div key={index} className="whitespace-pre-wrap">{part.text}</div>;
-                    if (part.type === "source-url") return <a key={index} href={part.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex max-w-full truncate rounded-md border border-border bg-surface-soft px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground">{part.title || part.url}</a>;
+                    if (part.type === "source-url") return <a key={index} href={part.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex max-w-full truncate rounded-md border border-border bg-surface-soft px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground">{part.title || part.url}</a>;
                     return null;
                   })}
                 </MessageContent>
@@ -204,13 +238,25 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
             );
           })}
 
-          {status === "submitted" ? <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="size-3.5 animate-spin" />{web ? "Checking sources and the web…" : "Thinking…"}</div> : null}
+          {thinkingStartedAt !== null ? (
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground" aria-live="polite">
+              <Loader2 className="size-3.5 animate-spin" />
+              <span>{thinkingLabel} · {formatElapsed(thinkingElapsedMs)}</span>
+            </div>
+          ) : lastThinkingMs !== null && busy ? (
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground" aria-live="polite">
+              <span className="size-1.5 rounded-full bg-primary/70" />
+              <span>Thought for {formatElapsed(lastThinkingMs)} · Responding…</span>
+            </div>
+          ) : lastThinkingMs !== null && status === "ready" ? (
+            <div className="text-[12px] text-subtle-foreground">Thought for {formatElapsed(lastThinkingMs)}</div>
+          ) : null}
           <div ref={endRef} />
         </div>
       </div>
 
       <div className="shrink-0 bg-surface px-2.5 pb-2.5 sm:px-4 sm:pb-4">
-        <div className="mx-auto max-w-[820px]">
+        <div className="mx-auto max-w-[860px]">
           <input ref={fileInputRef} type="file" multiple className="hidden" accept=".pdf,.docx,.pptx,.xlsx,.txt,.md,.csv,.html,.png,.jpg,.jpeg" onChange={(event) => void uploadFiles(Array.from(event.target.files || []))} />
           <form
             onSubmit={(event) => { event.preventDefault(); void submit(); }}
@@ -221,7 +267,7 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
             className={`rounded-2xl border bg-input p-2 transition focus-within:border-focus/60 focus-within:ring-2 focus-within:ring-focus/10 ${dragging ? "border-primary/60 bg-primary/[.035]" : "border-border"}`}
           >
             {attachments.length ? <div className="flex flex-wrap gap-1.5 px-1.5 pb-1.5">{attachments.map((item) => <div key={item.id} className="flex max-w-full items-center gap-1.5 rounded-md border border-border bg-surface-raised px-2 py-1.5 text-[10px] text-muted-foreground"><FileText className="size-3.5 shrink-0" /><span className="max-w-48 truncate">{item.name}</span><span className={item.status === "ready" ? "text-emerald-300/80" : item.status === "failed" ? "text-red-300/80" : "text-amber-200/70"}>{item.status === "ready" ? "Ready" : item.status === "failed" ? "Failed" : "Processing"}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => void removeAttachment(item.id)} className="rounded p-0.5 hover:bg-white/[.05]"><X className="size-3" /></button></div>)}</div> : null}
-            <textarea value={input} onChange={(event) => setInput(event.target.value)} onPaste={(event) => { const files = Array.from(event.clipboardData.files || []); if (files.length) { event.preventDefault(); void uploadFiles(files); } }} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submit(); } }} rows={1} placeholder={dragging ? "Drop files to attach to this conversation" : placeholder} className="max-h-40 min-h-12 w-full resize-none bg-transparent px-2.5 py-2.5 text-[16px] leading-6 outline-none placeholder:text-subtle-foreground sm:text-sm" />
+            <textarea value={input} onChange={(event) => setInput(event.target.value)} onPaste={(event) => { const files = Array.from(event.clipboardData.files || []); if (files.length) { event.preventDefault(); void uploadFiles(files); } }} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submit(); } }} rows={1} placeholder={dragging ? "Drop files to attach to this conversation" : placeholder} className="max-h-40 min-h-12 w-full resize-none bg-transparent px-2.5 py-2.5 text-[16px] leading-6 outline-none placeholder:text-subtle-foreground" />
             <div className="flex items-center justify-between px-0.5">
               <div className="flex items-center gap-1">
                 <IconButton label="Attach files" disabled={uploading} onClick={() => fileInputRef.current?.click()}>{uploading ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}</IconButton>
