@@ -62,7 +62,7 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thinkingElapsedRef = useRef(0);
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
-  const { messages, setMessages, sendMessage, status, error, stop } = useChat({ id: conversationId, messages: initialMessages, transport });
+  const { messages, sendMessage, status, error, stop } = useChat({ id: conversationId, messages: initialMessages, transport });
   const busy = status === "streaming" || status === "submitted";
   const emptyConversation = messages.length === 0;
   const indexing = attachments.some((item) => item.status === "queued" || item.status === "processing");
@@ -104,14 +104,18 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
     return () => window.clearInterval(timer);
   }, [attachments, indexing]);
 
-  async function submit(text = input) {
-    const value = text.trim();
-    if (!value || busy) return;
-    setRequestMessageCount(messages.length);
+  function startThinkingTimer(messageCount: number) {
+    setRequestMessageCount(messageCount);
     thinkingElapsedRef.current = 0;
     setThinkingElapsedMs(0);
     setLastThinkingMs(null);
     setTimingRequest(true);
+  }
+
+  async function submit(text = input) {
+    const value = text.trim();
+    if (!value || busy) return;
+    startThinkingTimer(messages.length);
     setInput("");
     await sendMessage({ text: value }, { body: { botId: bot.id, conversationId, webSearch: web } });
     router.refresh();
@@ -131,16 +135,29 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
 
   async function saveEdit(messageId: string) {
     const value = editText.trim();
-    if (!value || savingMessageId) return;
+    if (!value || savingMessageId || busy) return;
+    const messageIndex = messages.findIndex((message) => message.id === messageId && message.role === "user");
+    if (messageIndex < 0) return;
+    const originalText = messageText(messages[messageIndex]).trim();
+    if (value === originalText) return;
+
     setSavingMessageId(messageId);
+    setEditingMessageId(null);
+    setEditText("");
+    startThinkingTimer(messageIndex + 1);
     try {
-      const response = await fetch(`/api/messages/${encodeURIComponent(messageId)}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ text: value }) });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.error || "Could not edit message");
-      setMessages((current) => current.map((message) => message.id === messageId ? { ...message, parts: body.parts as UIMessage["parts"] } : message));
-      setEditingMessageId(null); setEditText(""); router.refresh(); toast.success("Message updated");
-    } catch (editError) { toast.error(editError instanceof Error ? editError.message : "Could not edit message"); }
-    finally { setSavingMessageId(null); }
+      // AI SDK replaces this user message in place and drops every later turn before
+      // submitting the edited branch, so the old assistant response cannot survive.
+      await sendMessage(
+        { text: value, messageId },
+        { body: { botId: bot.id, conversationId, webSearch: web } },
+      );
+      router.refresh();
+    } catch (editError) {
+      toast.error(editError instanceof Error ? editError.message : "Could not regenerate from the edited message");
+    } finally {
+      setSavingMessageId(null);
+    }
   }
 
   async function uploadOne(file: File) {
@@ -216,13 +233,15 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
           {messages.map((message) => {
             const editing = editingMessageId === message.id && message.role === "user";
             const text = messageText(message);
+            const editValue = editText.trim();
+            const editChanged = editing && editValue.length > 0 && editValue !== text.trim();
             return (
               <Message from={message.role} key={message.id}>
                 <MessageContent className={message.role === "user" ? "max-w-[90%] rounded-xl bg-[#e7edf6] px-3.5 py-2.5 text-[16px] leading-7 text-[#172033] sm:max-w-[78%] sm:px-4 sm:py-3" : "w-full text-[16px] leading-7"}>
                   {editing ? (
                     <div className="min-w-[min(70vw,22rem)] sm:min-w-80">
-                      <textarea autoFocus value={editText} onChange={(event) => setEditText(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { setEditingMessageId(null); setEditText(""); } if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void saveEdit(message.id); } }} rows={Math.min(8, Math.max(2, editText.split("\n").length))} className="max-h-48 w-full resize-none bg-transparent text-[16px] leading-7 text-[#172033] outline-none" />
-                      <div className="mt-2 flex justify-end gap-1.5"><button type="button" aria-label="Cancel edit" onClick={() => { setEditingMessageId(null); setEditText(""); }} className="grid size-7 place-items-center rounded-full bg-[#d3dce9] text-[#445064] hover:bg-[#c9d4e3]"><X className="size-3.5" /></button><button type="button" aria-label="Save message edit" disabled={!editText.trim() || savingMessageId === message.id} onClick={() => void saveEdit(message.id)} className="grid size-7 place-items-center rounded-full bg-[#2e6fdd] text-white hover:bg-[#2865cc] disabled:opacity-50">{savingMessageId === message.id ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}</button></div>
+                      <textarea autoFocus value={editText} onChange={(event) => setEditText(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { setEditingMessageId(null); setEditText(""); } if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); if (editChanged) void saveEdit(message.id); } }} rows={Math.min(8, Math.max(2, editText.split("\n").length))} className="max-h-48 w-full resize-none bg-transparent text-[16px] leading-7 text-[#172033] outline-none" />
+                      <div className="mt-2 flex justify-end gap-1.5"><button type="button" aria-label="Cancel edit" onClick={() => { setEditingMessageId(null); setEditText(""); }} className="grid size-7 place-items-center rounded-full bg-[#d3dce9] text-[#445064] hover:bg-[#c9d4e3]"><X className="size-3.5" /></button><button type="button" aria-label="Save edit and regenerate response" title={editChanged ? "Save and regenerate" : "Change the message to save"} disabled={!editChanged || savingMessageId === message.id} onClick={() => void saveEdit(message.id)} className="grid size-7 place-items-center rounded-full bg-[#2e6fdd] text-white hover:bg-[#2865cc] disabled:cursor-not-allowed disabled:opacity-40">{savingMessageId === message.id ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}</button></div>
                     </div>
                   ) : message.parts.map((part, index) => {
                     if (part.type === "text") return message.role === "assistant" ? <MessageResponse key={index}>{part.text}</MessageResponse> : <div key={index} className="whitespace-pre-wrap">{part.text}</div>;
