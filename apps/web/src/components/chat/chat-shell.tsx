@@ -54,18 +54,15 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [savingMessageId, setSavingMessageId] = useState<string | null>(null);
-  const [thinkingStartedAt, setThinkingStartedAt] = useState<number | null>(null);
+  const [timingRequest, setTimingRequest] = useState(false);
+  const [requestMessageCount, setRequestMessageCount] = useState(initialMessages.length);
   const [thinkingElapsedMs, setThinkingElapsedMs] = useState(0);
   const [lastThinkingMs, setLastThinkingMs] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const requestMessageCountRef = useRef(initialMessages.length);
-  const messagesRef = useRef(initialMessages);
-  const statusRef = useRef<string>("ready");
+  const thinkingElapsedRef = useRef(0);
   const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
   const { messages, setMessages, sendMessage, status, error, stop } = useChat({ id: conversationId, messages: initialMessages, transport });
-  messagesRef.current = messages;
-  statusRef.current = status;
   const busy = status === "streaming" || status === "submitted";
   const emptyConversation = messages.length === 0;
   const indexing = attachments.some((item) => item.status === "queued" || item.status === "processing");
@@ -74,21 +71,20 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
   useEffect(() => { if (error) toast.error(error.message); }, [error]);
 
   useEffect(() => {
-    if (thinkingStartedAt === null) return;
+    if (!timingRequest) return;
     const timer = window.setInterval(() => {
-      const elapsed = Date.now() - thinkingStartedAt;
-      const freshAssistantText = messagesRef.current
-        .slice(requestMessageCountRef.current)
+      thinkingElapsedRef.current += 100;
+      setThinkingElapsedMs(thinkingElapsedRef.current);
+      const freshAssistantText = messages
+        .slice(requestMessageCount)
         .some((message) => message.role === "assistant" && messageText(message).trim().length > 0);
-      const currentStatus = statusRef.current;
-      setThinkingElapsedMs(elapsed);
-      if (freshAssistantText || currentStatus === "ready" || currentStatus === "error") {
-        setLastThinkingMs(elapsed);
-        setThinkingStartedAt(null);
+      if (freshAssistantText || status === "error") {
+        setLastThinkingMs(thinkingElapsedRef.current);
+        setTimingRequest(false);
       }
     }, 100);
     return () => window.clearInterval(timer);
-  }, [thinkingStartedAt]);
+  }, [messages, requestMessageCount, status, timingRequest]);
 
   useEffect(() => {
     if (!indexing) return;
@@ -111,10 +107,11 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
   async function submit(text = input) {
     const value = text.trim();
     if (!value || busy) return;
-    requestMessageCountRef.current = messages.length;
-    setThinkingStartedAt(Date.now());
+    setRequestMessageCount(messages.length);
+    thinkingElapsedRef.current = 0;
     setThinkingElapsedMs(0);
     setLastThinkingMs(null);
+    setTimingRequest(true);
     setInput("");
     await sendMessage({ text: value }, { body: { botId: bot.id, conversationId, webSearch: web } });
     router.refresh();
@@ -238,7 +235,7 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
             );
           })}
 
-          {thinkingStartedAt !== null ? (
+          {timingRequest ? (
             <div className="flex items-center gap-2 text-[13px] text-muted-foreground" aria-live="polite">
               <Loader2 className="size-3.5 animate-spin" />
               <span>{thinkingLabel} · {formatElapsed(thinkingElapsedMs)}</span>
