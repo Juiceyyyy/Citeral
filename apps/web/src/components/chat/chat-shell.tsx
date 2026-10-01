@@ -35,6 +35,13 @@ function formatElapsed(ms: number) {
   return `${(Math.max(0, ms) / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
 }
 
+function attachmentStatusLabel(status: string) {
+  if (status === "ready") return "Ready";
+  if (status === "failed") return "Failed";
+  if (status === "processing") return "Processing";
+  return "Queued";
+}
+
 export function ChatShell({ bot, conversationId, initialMessages, initialAttachments, starterPrompts, welcomeTitle, welcomeBody, placeholder }: {
   bot: ChatBotInfo;
   conversationId: string;
@@ -66,6 +73,8 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
   const busy = status === "streaming" || status === "submitted";
   const emptyConversation = messages.length === 0;
   const indexing = attachments.some((item) => item.status === "queued" || item.status === "processing");
+  const failedAttachment = attachments.some((item) => item.status === "failed");
+  const attachmentsBlocked = attachments.some((item) => item.status !== "ready");
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, status]);
   useEffect(() => { if (error) toast.error(error.message); }, [error]);
@@ -100,7 +109,7 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
         const updateMap = new Map(updates.map((item) => [item.id, item]));
         setAttachments((current) => current.map((item) => updateMap.get(item.id) || item));
       }
-    }, 5000);
+    }, 2000);
     return () => window.clearInterval(timer);
   }, [attachments, indexing]);
 
@@ -112,9 +121,14 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
     setTimingRequest(true);
   }
 
+  function explainBlockedAttachments() {
+    toast.error(failedAttachment ? "Remove the failed attachment before sending a message." : "Wait for every attached file to show Ready before sending a message.");
+  }
+
   async function submit(text = input) {
     const value = text.trim();
     if (!value || busy) return;
+    if (attachmentsBlocked || uploading) { explainBlockedAttachments(); return; }
     startThinkingTimer(messages.length);
     setInput("");
     await sendMessage({ text: value }, { body: { botId: bot.id, conversationId, webSearch: web } });
@@ -136,6 +150,7 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
   async function saveEdit(messageId: string) {
     const value = editText.trim();
     if (!value || savingMessageId || busy) return;
+    if (attachmentsBlocked || uploading) { explainBlockedAttachments(); return; }
     const messageIndex = messages.findIndex((message) => message.id === messageId && message.role === "user");
     if (messageIndex < 0) return;
     const originalText = messageText(messages[messageIndex]).trim();
@@ -241,7 +256,7 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
                   {editing ? (
                     <div className="min-w-[min(70vw,22rem)] sm:min-w-80">
                       <textarea autoFocus value={editText} onChange={(event) => setEditText(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { setEditingMessageId(null); setEditText(""); } if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); if (editChanged) void saveEdit(message.id); } }} rows={Math.min(8, Math.max(2, editText.split("\n").length))} className="max-h-48 w-full resize-none bg-transparent text-[16px] leading-7 text-[#172033] outline-none" />
-                      <div className="mt-2 flex justify-end gap-1.5"><button type="button" aria-label="Cancel edit" onClick={() => { setEditingMessageId(null); setEditText(""); }} className="grid size-7 place-items-center rounded-full bg-[#d3dce9] text-[#445064] hover:bg-[#c9d4e3]"><X className="size-3.5" /></button><button type="button" aria-label="Save edit and regenerate response" title={editChanged ? "Save and regenerate" : "Change the message to save"} disabled={!editChanged || savingMessageId === message.id} onClick={() => void saveEdit(message.id)} className="grid size-7 place-items-center rounded-full bg-[#2e6fdd] text-white hover:bg-[#2865cc] disabled:cursor-not-allowed disabled:opacity-40">{savingMessageId === message.id ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}</button></div>
+                      <div className="mt-2 flex justify-end gap-1.5"><button type="button" aria-label="Cancel edit" onClick={() => { setEditingMessageId(null); setEditText(""); }} className="grid size-7 place-items-center rounded-full bg-[#d3dce9] text-[#445064] hover:bg-[#c9d4e3]"><X className="size-3.5" /></button><button type="button" aria-label="Save edit and regenerate response" title={editChanged ? "Save and regenerate" : "Change the message to save"} disabled={!editChanged || savingMessageId === message.id || attachmentsBlocked || uploading} onClick={() => void saveEdit(message.id)} className="grid size-7 place-items-center rounded-full bg-[#2e6fdd] text-white hover:bg-[#2865cc] disabled:cursor-not-allowed disabled:opacity-40">{savingMessageId === message.id ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}</button></div>
                     </div>
                   ) : message.parts.map((part, index) => {
                     if (part.type === "text") return message.role === "assistant" ? <MessageResponse key={index}>{part.text}</MessageResponse> : <div key={index} className="whitespace-pre-wrap">{part.text}</div>;
@@ -282,7 +297,7 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
             onDrop={(event) => { event.preventDefault(); setDragging(false); void uploadFiles(Array.from(event.dataTransfer.files || [])); }}
             className={`rounded-2xl border bg-input p-2 transition focus-within:border-focus/60 focus-within:ring-2 focus-within:ring-focus/10 ${dragging ? "border-primary/60 bg-primary/[.035]" : "border-border"}`}
           >
-            {attachments.length ? <div className="flex flex-wrap gap-1.5 px-1.5 pb-1.5">{attachments.map((item) => <div key={item.id} className="flex max-w-full items-center gap-1.5 rounded-md border border-border bg-surface-raised px-2 py-1.5 text-[10px] text-muted-foreground"><FileText className="size-3.5 shrink-0" /><span className="max-w-48 truncate">{item.name}</span><span className={item.status === "ready" ? "text-emerald-300/80" : item.status === "failed" ? "text-red-300/80" : "text-amber-200/70"}>{item.status === "ready" ? "Ready" : item.status === "failed" ? "Failed" : "Processing"}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => void removeAttachment(item.id)} className="rounded p-0.5 hover:bg-white/[.05]"><X className="size-3" /></button></div>)}</div> : null}
+            {attachments.length ? <div className="flex flex-wrap gap-1.5 px-1.5 pb-1.5">{attachments.map((item) => <div key={item.id} className="flex max-w-full items-center gap-1.5 rounded-md border border-border bg-surface-raised px-2 py-1.5 text-[10px] text-muted-foreground"><FileText className="size-3.5 shrink-0" /><span className="max-w-48 truncate">{item.name}</span><span className={item.status === "ready" ? "text-emerald-300/80" : item.status === "failed" ? "text-red-300/80" : "text-amber-200/70"}>{attachmentStatusLabel(item.status)}</span><button type="button" aria-label={`Remove ${item.name}`} onClick={() => void removeAttachment(item.id)} className="rounded p-0.5 hover:bg-white/[.05]"><X className="size-3" /></button></div>)}</div> : null}
             <textarea value={input} onChange={(event) => setInput(event.target.value)} onPaste={(event) => { const files = Array.from(event.clipboardData.files || []); if (files.length) { event.preventDefault(); void uploadFiles(files); } }} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submit(); } }} rows={1} placeholder={dragging ? "Drop files to attach to this conversation" : placeholder} className="max-h-40 min-h-12 w-full resize-none bg-transparent px-2.5 py-2.5 text-[16px] leading-6 outline-none placeholder:text-subtle-foreground" />
             <div className="flex items-center justify-between px-0.5">
               <div className="flex items-center gap-1">
@@ -299,10 +314,10 @@ export function ChatShell({ bot, conversationId, initialMessages, initialAttachm
                   <span>Web</span>
                 </button>
               </div>
-              {busy ? <button type="button" aria-label="Stop generating" title="Stop generating" onClick={() => stop()} className="grid size-9 place-items-center rounded-full bg-primary text-white hover:bg-primary-hover"><Square className="size-3.5 fill-current" /></button> : <button type="submit" aria-label="Send message" title="Send message" disabled={!input.trim()} className="grid size-9 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-muted disabled:text-subtle-foreground"><ArrowUp className="size-[17px]" /></button>}
+              {busy ? <button type="button" aria-label="Stop generating" title="Stop generating" onClick={() => stop()} className="grid size-9 place-items-center rounded-full bg-primary text-white hover:bg-primary-hover"><Square className="size-3.5 fill-current" /></button> : <button type="submit" aria-label="Send message" title={attachmentsBlocked || uploading ? "Wait for attached files to be ready" : "Send message"} disabled={!input.trim() || attachmentsBlocked || uploading} className="grid size-9 place-items-center rounded-full bg-primary text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-muted disabled:text-subtle-foreground"><ArrowUp className="size-[17px]" /></button>}
             </div>
           </form>
-          {indexing ? <p className="mt-1.5 text-center text-[10px] leading-4 text-[#a29578]">Attached files are conversation-only. Use them after they show Ready.</p> : null}
+          {failedAttachment ? <p className="mt-1.5 text-center text-[10px] leading-4 text-red-300/80">An attached file failed to process. Remove it before sending a message.</p> : indexing || uploading ? <p className="mt-1.5 text-center text-[10px] leading-4 text-[#a29578]">Preparing attached files. Sending is locked until every file shows Ready.</p> : null}
           <p className="mt-1.5 text-center text-[9px] leading-4 text-subtle-foreground sm:text-[10px]">{web ? "Web is on for new messages. Verify important claims against linked sources." : "Web is off by default. Turn it on when you want fresh external information."}</p>
         </div>
       </div>
