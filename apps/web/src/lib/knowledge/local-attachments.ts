@@ -49,7 +49,11 @@ async function extractPdf(file: File) {
   if (!pdfjs.GlobalWorkerOptions.workerSrc) {
     pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
   }
-  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const task = pdfjs.getDocument({
+    data: new Uint8Array(await file.arrayBuffer()),
+    enableScripting: false,
+    isEvalSupported: false,
+  });
   const pdf = await task.promise;
   const pages: string[] = [];
   try {
@@ -64,7 +68,7 @@ async function extractPdf(file: File) {
       page.cleanup();
     }
   } finally {
-    await pdf.destroy();
+    await task.destroy();
   }
   return pages.join("\n\n");
 }
