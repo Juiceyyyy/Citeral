@@ -1,0 +1,140 @@
+name: Fast private upload worker
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/worker/**"
+      - ".github/workflows/private-upload-worker.yml"
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: provenance-private-upload-worker
+  cancel-in-progress: false
+
+jobs:
+  queue-check:
+    runs-on: ubuntu-slim
+    outputs:
+      has_queue: ${{ steps.queue.outputs.has_queue }}
+      ready: ${{ steps.config.outputs.ready }}
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Check private worker configuration
+        id: config
+        shell: bash
+        run: |
+          if [[ -n "$SUPABASE_URL" && -n "$SUPABASE_SERVICE_ROLE_KEY" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Private worker secrets are not configured; skipping."
+          fi
+
+      - name: Check for queued document ingestion
+        id: queue
+        if: steps.config.outputs.ready == 'true'
+        shell: bash
+        run: |
+          payload=$(curl --fail-with-body --silent --show-error \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Accept: application/json" \
+            "$SUPABASE_URL/rest/v1/ingestion_jobs?select=id&job_type=eq.document_ingest&status=in.(queued,processing)&limit=1")
+          if [[ "$payload" == "[]" ]]; then
+            echo "has_queue=false" >> "$GITHUB_OUTPUT"
+            echo "No private ingestion jobs waiting."
+          else
+            echo "has_queue=true" >> "$GITHUB_OUTPUT"
+            echo "Private ingestion work is waiting."
+          fi
+
+  worker:
+    needs: queue-check
+    if: needs.queue-check.outputs.ready == 'true' && needs.queue-check.outputs.has_queue == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      clamav:
+        image: clamav/clamav:1.5.4
+        ports:
+          - 3310:3310
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_EMBEDDING_MODEL: "@cf/baai/bge-m3"
+      EMBEDDING_DIMENSIONS: "1024"
+      WORKER_BATCH_SIZE: "8"
+      WORKER_ONESHOT: "true"
+      MALWARE_SCAN_REQUIRED: "true"
+      CLAMAV_HOST: 127.0.0.1
+      CLAMAV_PORT: "3310"
+      MAX_SOURCE_BYTES: "52428800"
+
+    steps:
+      - name: Check worker configuration
+        id: config
+        shell: bash
+        run: |
+          if [[ -n "$DATABASE_URL" && -n "$SUPABASE_URL" && -n "$SUPABASE_SERVICE_ROLE_KEY" && -n "$CLOUDFLARE_ACCOUNT_ID" && -n "$CLOUDFLARE_API_TOKEN" ]]; then
+            if [[ "$DATABASE_URL" == *"db."*".supabase.co"* ]]; then
+              echo "DATABASE_URL points to Supabase's direct database host. Use the Supabase Session Pooler URI for GitHub-hosted runners." >&2
+              exit 1
+            fi
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Worker secrets are not configured; skipping without any paid fallback."
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.config.outputs.ready == 'true'
+
+      - uses: actions/setup-python@v7
+        if: steps.config.outputs.ready == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/worker/pyproject.toml
+
+      - name: Install worker
+        if: steps.config.outputs.ready == 'true'
+        working-directory: apps/worker
+        run: |
+          python -m pip install --upgrade pip
+          pip install . --extra-index-url https://download.pytorch.org/whl/cpu
+
+      - name: Wait for ClamAV
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          python - <<'PY'
+          import socket, time
+          for _ in range(60):
+              try:
+                  with socket.create_connection(("127.0.0.1", 3310), timeout=2):
+                      print("ClamAV is ready")
+                      raise SystemExit(0)
+              except OSError:
+                  time.sleep(2)
+          raise SystemExit("ClamAV did not become ready")
+          PY
+
+      - name: Process queued private documents
+        if: steps.config.outputs.ready == 'true'
+        working-directory: apps/worker
+        run: grounded-worker
+
+      - name: Clean abandoned transient uploads
+        if: steps.config.outputs.ready == 'true'
+        working-directory: apps/worker
+        run: python -m grounded_worker.cleanup_uploads
