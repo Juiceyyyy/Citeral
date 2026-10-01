@@ -49,10 +49,7 @@ async function extractPdf(file: File) {
   if (!pdfjs.GlobalWorkerOptions.workerSrc) {
     pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
   }
-  const task = pdfjs.getDocument({
-    data: new Uint8Array(await file.arrayBuffer()),
-    isEvalSupported: false,
-  });
+  const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
   const pdf = await task.promise;
   const pages: string[] = [];
   try {
