@@ -12,7 +12,19 @@ import { getPortfolioContext } from "@/lib/portfolio/server";
 import { env } from "@/lib/env";
 
 export const maxDuration = 60;
-const bodySchema = z.object({ messages: z.array(z.unknown()).min(1).max(100), botId: z.string().uuid(), conversationId: z.string().uuid(), webSearch: z.boolean().default(false) });
+
+const localAttachmentSchema = z.object({
+  documentId: z.string().uuid(),
+  text: z.string().min(1).max(90_000),
+});
+
+const bodySchema = z.object({
+  messages: z.array(z.unknown()).min(1).max(100),
+  botId: z.string().uuid(),
+  conversationId: z.string().uuid(),
+  webSearch: z.boolean().default(false),
+  localAttachments: z.array(localAttachmentSchema).max(8).default([]),
+});
 
 function latestUserText(messages: UIMessage[]) {
   const message = [...messages].reverse().find((item) => item.role === "user");
@@ -31,6 +43,13 @@ function responseTokenBudget(query: string) {
   if (asksForDepth || words > 90) return 1_600;
   if (words < 16) return 800;
   return 1_100;
+}
+
+function localContextText(items: Array<{ id: string; title: string; mime_type: string; text: string }>) {
+  if (!items.length) return "";
+  return items
+    .map((item, index) => `[L${index + 1}] ${item.title} | ${item.mime_type} | browser-extracted attachment context\n${item.text}`)
+    .join("\n\n---\n\n");
 }
 
 const EMPTY_RETRIEVAL_METRICS: RetrievalMetrics = {
@@ -55,8 +74,6 @@ export async function POST(req: Request) {
     const parsed = bodySchema.safeParse(raw);
     if (!parsed.success) return NextResponse.json({ error: "Invalid chat request" }, { status: 400 });
 
-    // Keep the tool schema available during validation so conversations that already
-    // contain web-search tool parts remain valid even when Web is off for this turn.
     const validated = await safeValidateUIMessages({ messages: parsed.data.messages, tools: webSearchTools });
     if (!validated.success) return NextResponse.json({ error: "Invalid chat message structure" }, { status: 400 });
     const messages = validated.data;
@@ -96,23 +113,42 @@ export async function POST(req: Request) {
     if (attachmentMembershipError) return NextResponse.json({ error: "Could not verify conversation attachments" }, { status: 500 });
 
     const attachmentIds = (attachmentMembership ?? []).map((item) => item.document_id);
+    const membershipSet = new Set(attachmentIds);
+    const suppliedLocalIds = new Set(parsed.data.localAttachments.map((item) => item.documentId));
+    if ([...suppliedLocalIds].some((id) => !membershipSet.has(id))) {
+      return NextResponse.json({ error: "Local attachment context does not belong to this conversation" }, { status: 403 });
+    }
+
+    let attachmentRows: Array<{ id: string; title: string; mime_type: string; status: string }> = [];
     if (attachmentIds.length) {
-      const { data: blockedAttachments, error: blockedAttachmentError } = await supabase
+      const { data, error: attachmentError } = await supabase
         .from("documents")
-        .select("id,title,status")
-        .in("id", attachmentIds)
-        .neq("status", "ready");
-      if (blockedAttachmentError) return NextResponse.json({ error: "Could not verify attachment readiness" }, { status: 500 });
-      if ((blockedAttachments?.length ?? 0) > 0) {
+        .select("id,title,mime_type,status")
+        .in("id", attachmentIds);
+      if (attachmentError) return NextResponse.json({ error: "Could not verify attachment readiness" }, { status: 500 });
+      attachmentRows = data ?? [];
+      const blocked = attachmentRows.filter((item) => item.status !== "ready" && !suppliedLocalIds.has(item.id));
+      if (blocked.length) {
         return NextResponse.json(
           {
-            error: "Wait for every attached file to show Ready before sending a message.",
-            attachments: blockedAttachments,
+            error: "Wait for every attached file to be ready for chat before sending a message.",
+            attachments: blocked.map(({ id, title, status }) => ({ id, title, status })),
           },
           { status: 409 },
         );
       }
     }
+
+    const localTextById = new Map(parsed.data.localAttachments.map((item) => [item.documentId, item.text]));
+    let localChars = 0;
+    const verifiedLocalAttachments = attachmentRows
+      .filter((item) => localTextById.has(item.id))
+      .map((item) => {
+        const text = (localTextById.get(item.id) ?? "").slice(0, Math.max(0, 120_000 - localChars));
+        localChars += text.length;
+        return { id: item.id, title: item.title, mime_type: item.mime_type, text };
+      })
+      .filter((item) => item.text.trim().length > 0);
 
     const retrievalPromise = query
       ? retrieveChunks(supabase, bot.id, query, conversation.id, embeddingPromise)
@@ -125,7 +161,9 @@ export async function POST(req: Request) {
       portfolioPromise,
     ]);
 
-    const ragContext = chunksToContext(chunks);
+    const indexedContext = chunksToContext(chunks);
+    const localContext = localContextText(verifiedLocalAttachments);
+    const ragContext = [indexedContext, localContext].filter(Boolean).join("\n\n---\n\n");
     const system = buildSystemPrompt(
       bot as BotRecord,
       ragContext,
@@ -145,11 +183,7 @@ export async function POST(req: Request) {
       system,
       messages: modelMessages,
       tools,
-      // Keep routine chat concise enough to stream quickly. Explicitly detailed
-      // questions receive a larger budget via responseTokenBudget().
       maxOutputTokens,
-      // One model step is enough normally. When Web is enabled, allow the model
-      // to search and then consume the tool result before producing its answer.
       stopWhen: stepCountIs(parsed.data.webSearch ? 3 : 1),
       maxRetries: 1,
       abortSignal: req.signal,
@@ -180,6 +214,8 @@ export async function POST(req: Request) {
             rag_chunks: chunks.length,
             rag_match_count: retrievalMetrics.matchCount,
             scoped_retrieval: true,
+            local_attachment_count: verifiedLocalAttachments.length,
+            local_attachment_chars: localChars,
             embedding_ms: retrievalMetrics.embeddingMs,
             retrieval_ms: retrievalMetrics.retrievalMs,
             embedding_fallback: retrievalMetrics.embeddingFallback,
