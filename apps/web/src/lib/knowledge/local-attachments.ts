@@ -51,7 +51,6 @@ async function extractPdf(file: File) {
   }
   const task = pdfjs.getDocument({
     data: new Uint8Array(await file.arrayBuffer()),
-    enableScripting: false,
     isEvalSupported: false,
   });
   const pdf = await task.promise;
