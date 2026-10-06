@@ -58,3 +58,8 @@ The application still requires at least 8 characters in its signup and password-
 ## Backup and recovery
 
 The reference deployment uses a scheduled encrypted logical backup workflow. Plaintext database dumps are never uploaded from this public repository. Persistent backup artifacts require the separate `BACKUP_PASSPHRASE` Actions secret and are retained for a short rolling recovery window to remain within free GitHub artifact storage. See `docs/OPERATIONS.md` for restore verification and incident procedures.
+
+
+## Dedicated worker scopes
+
+Hosted ingestion workers are separated by job type. The fast private-upload worker can claim only `document_ingest` jobs, while the curated-source worker can claim only `source_refresh` jobs. This prevents a slow authoritative-source parse from being reclaimed by the private-upload worker's separate scheduler and avoids concurrent processing of the same cross-purpose job.

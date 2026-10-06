@@ -78,6 +78,7 @@ jobs:
       EMBEDDING_DIMENSIONS: "1024"
       WORKER_BATCH_SIZE: "8"
       WORKER_ONESHOT: "true"
+      WORKER_JOB_TYPES: "document_ingest"
       MALWARE_SCAN_REQUIRED: "true"
       CLAMAV_HOST: 127.0.0.1
       CLAMAV_PORT: "3310"

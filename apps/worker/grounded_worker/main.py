@@ -58,7 +58,11 @@ def db(settings: Settings) -> Iterator[psycopg.Connection[Any]]:
         yield conn
 
 
-def claim_job(conn: psycopg.Connection[Any], worker_id: str) -> dict[str, Any] | None:
+def claim_job(
+    conn: psycopg.Connection[Any],
+    worker_id: str,
+    job_types: tuple[str, ...],
+) -> dict[str, Any] | None:
     with conn.transaction():
         row = conn.execute(
             """
@@ -68,7 +72,8 @@ def claim_job(conn: psycopg.Connection[Any], worker_id: str) -> dict[str, Any] |
             from public.ingestion_jobs j
             join public.document_versions v on v.id=j.document_version_id
             join public.documents d on d.id=v.document_id
-            where (
+            where j.job_type = any(%s)
+              and (
                     j.status='queued'
                     or (j.status='processing' and j.locked_at < now() - interval '20 minutes')
                   )
@@ -77,6 +82,7 @@ def claim_job(conn: psycopg.Connection[Any], worker_id: str) -> dict[str, Any] |
             for update skip locked
             limit 1
             """
+            (list(job_types),),
         ).fetchone()
         if not row:
             return None
@@ -409,13 +415,18 @@ def run() -> None:
     storage = create_client(settings.supabase_url, settings.supabase_service_role_key)
     converter = DocumentConverter()
     curated_pdf_converter = _curated_pdf_converter()
-    LOG.info("Worker %s started%s", settings.worker_id, " in one-shot mode" if settings.one_shot else "")
+    LOG.info(
+        "Worker %s started%s for job types: %s",
+        settings.worker_id,
+        " in one-shot mode" if settings.one_shot else "",
+        ", ".join(settings.job_types),
+    )
 
     with httpx.Client(timeout=httpx.Timeout(60.0, connect=15.0)) as ai, db(settings) as conn:
         while not STOP:
             processed = 0
             for _ in range(settings.batch_size):
-                job = claim_job(conn, settings.worker_id)
+                job = claim_job(conn, settings.worker_id, settings.job_types)
                 if not job:
                     break
                 try:

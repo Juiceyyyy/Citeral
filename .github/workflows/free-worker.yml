@@ -37,6 +37,7 @@ jobs:
       EMBEDDING_DIMENSIONS: "1024"
       WORKER_BATCH_SIZE: "8"
       WORKER_ONESHOT: "true"
+      WORKER_JOB_TYPES: "source_refresh"
       MALWARE_SCAN_REQUIRED: "true"
       CLAMAV_HOST: 127.0.0.1
       CLAMAV_PORT: "3310"
@@ -188,7 +189,7 @@ jobs:
         working-directory: apps/worker
         run: grounded-refresh-due
 
-      - name: Process queued documents
+      - name: Process queued curated sources
         if: steps.config.outputs.ready == 'true'
         working-directory: apps/worker
         run: grounded-worker

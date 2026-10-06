@@ -18,6 +18,20 @@ def env_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+_ALLOWED_JOB_TYPES = {"document_ingest", "source_refresh"}
+
+
+def job_types_from_env() -> tuple[str, ...]:
+    raw = os.getenv("WORKER_JOB_TYPES", "document_ingest,source_refresh")
+    values = tuple(dict.fromkeys(item.strip() for item in raw.split(",") if item.strip()))
+    if not values:
+        raise RuntimeError("WORKER_JOB_TYPES must include at least one job type")
+    invalid = [value for value in values if value not in _ALLOWED_JOB_TYPES]
+    if invalid:
+        raise RuntimeError(f"Unsupported WORKER_JOB_TYPES value(s): {', '.join(invalid)}")
+    return values
+
+
 @dataclass(frozen=True)
 class Settings:
     database_url: str
@@ -31,6 +45,7 @@ class Settings:
     batch_size: int
     worker_id: str
     one_shot: bool
+    job_types: tuple[str, ...]
     clamav_host: str | None
     clamav_port: int
     malware_scan_required: bool
@@ -60,6 +75,7 @@ class Settings:
             batch_size=max(1, min(8, int(os.getenv("WORKER_BATCH_SIZE", "2")))),
             worker_id=os.getenv("WORKER_ID", f"worker-{os.getpid()}"),
             one_shot=env_bool("WORKER_ONESHOT", False),
+            job_types=job_types_from_env(),
             clamav_host=clamav_host,
             clamav_port=int(os.getenv("CLAMAV_PORT", "3310")),
             malware_scan_required=malware_scan_required,
