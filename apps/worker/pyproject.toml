@@ -19,6 +19,7 @@ grounded-worker = "grounded_worker.main:run"
 grounded-refresh-source = "grounded_worker.source_refresh:main"
 grounded-import-manifest = "grounded_worker.import_manifest:main"
 grounded-refresh-due = "grounded_worker.refresh_due:main"
+grounded-source-health = "grounded_worker.source_health:main"
 
 [tool.ruff]
 exclude = ["build"]
