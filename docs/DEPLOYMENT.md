@@ -4,7 +4,9 @@ This repository's reference deployment is intentionally zero-billable. Do not en
 
 ## 1. Supabase Free
 
-Create a dedicated Supabase Free project in the region required by your data-residency policy. Apply every migration in `supabase/migrations` in lexical order, then run the Supabase security and performance advisors.
+Create a dedicated Supabase Free project in the region required by your data-residency policy. For a **fresh project**, apply every migration in `supabase/migrations` in lexical order, then run the Supabase security and performance advisors.
+
+The current hosted Citeral production database was evolved incrementally before the repository's early migration history was consolidated, so some pre-October-2026 production migration timestamps do not map one-to-one to the fresh-install filenames. Do not point an unreviewed `supabase db push` at that existing production database solely to make historical timestamps match. New migrations from the October 6 source-health/security work onward use the production history timestamps; future schema changes should preserve that alignment.
 
 Required web environment variables:
 
