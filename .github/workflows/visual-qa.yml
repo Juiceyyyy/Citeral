@@ -1,0 +1,116 @@
+name: Responsive visual QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/src/app/**"
+      - "apps/web/src/components/**"
+      - "apps/web/src/app/globals.css"
+      - "evals/visual_smoke.mjs"
+      - ".github/workflows/visual-qa.yml"
+  schedule:
+    - cron: "43 4 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: citeral-responsive-visual-qa
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CITERAL_QA_MODE: "true"
+      NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder_1234567890
+      OPENAI_API_KEY: sk-ci-placeholder-not-used-at-build-time
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install application dependencies
+        run: npm install
+
+      - name: Install browser driver without changing the lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts playwright-core@1.55.0
+
+      - name: Build QA fixture
+        run: npm run build
+
+      - name: Start production server
+        shell: bash
+        run: |
+          npm --workspace apps/web run start -- --hostname 127.0.0.1 -p 3000 > /tmp/citeral-next.log 2>&1 &
+          echo $! > /tmp/citeral-next.pid
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:3000/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/citeral-next.log
+          exit 1
+
+      - name: Locate Chrome
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$CHROME" ]]; then
+            echo "No system Chrome/Chromium found" >&2
+            exit 1
+          fi
+          echo "CHROME_PATH=$CHROME" >> "$GITHUB_ENV"
+          "$CHROME" --version
+
+      - name: Run responsive browser checks
+        env:
+          QA_BASE_URL: http://127.0.0.1:3000
+          QA_SCREENSHOT_DIR: visual-qa
+        run: node evals/visual_smoke.mjs
+
+      - name: Add visual report summary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f visual-qa/report.json ]]; then
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          report=json.loads(Path("visual-qa/report.json").read_text())
+          total=len(report["checks"])
+          failed=len(report["failures"])
+          print("### Responsive visual QA")
+          print()
+          print(f"- Checks: **{total-failed}/{total} passed**")
+          print("- Viewports: 360×800, 390×844, 768×1024, 1366×768, 1920×1080")
+          print("- Routes: landing, login, signup, privacy, terms, workspace QA fixture")
+          if failed:
+              print()
+              print("#### Failures")
+              for failure in report["failures"]:
+                  print(f"- {failure}")
+          PY
+          fi
+
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: responsive-visual-qa
+          path: visual-qa
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Print server log on failure
+        if: failure()
+        run: cat /tmp/citeral-next.log || true
