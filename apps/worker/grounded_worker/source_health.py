@@ -95,7 +95,11 @@ def main() -> None:
             f"{health.ready_sources} | {health.failed_sources} | {health.queued_sources} | {health.unknown_sources} |"
         )
         if health.enabled_sources and health.ready_sources == 0:
-            critical.append(f"{health.name} has enabled sources but no usable indexed source")
+            message = f"{health.name} has enabled sources but no usable indexed source"
+            if health.coverage_status == "active":
+                critical.append(message)
+            else:
+                warnings.append(message)
 
     if stale_jobs:
         critical.append(f"{len(stale_jobs)} ingestion job(s) have been queued/processing for more than 45 minutes")
