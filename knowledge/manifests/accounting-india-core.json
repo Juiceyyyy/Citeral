@@ -9,7 +9,7 @@
     ],
     "jurisdiction_country": "India",
     "jurisdiction_region": null,
-    "version": "2026.10",
+    "version": "2026.10.1",
     "coverage_status": "partial"
   },
   "sources": [
@@ -47,8 +47,8 @@
     },
     {
       "title": "Companies Act, 2013",
-      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/15198/1/the_companies_act%2C_2013_no._18_of_2013_date_29.08.2013.pdf",
-      "publisher": "India Code, Legislative Department, Government of India",
+      "canonical_url": "https://nclat.nic.in/sites/default/files/2022-04/the-companies-act-2013.pdf",
+      "publisher": "National Company Law Appellate Tribunal, Government of India / National Informatics Centre",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
@@ -67,7 +67,9 @@
       "publisher": "Ministry of Corporate Affairs, Gazette of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
-      "refresh_interval_hours": 720
+      "refresh_interval_hours": 720,
+      "enabled": false,
+      "note": "Reference retained, but automated refresh is disabled because the official e-Gazette TLS chain cannot currently be validated by the hosted worker. Current Ind AS coverage remains active through ICAI compendia and amendment indexes."
     },
     {
       "title": "Companies (Indian Accounting Standards) Second Amendment Rules, 2025 - G.S.R. 549(E)",
@@ -75,7 +77,9 @@
       "publisher": "Ministry of Corporate Affairs, Gazette of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
-      "refresh_interval_hours": 720
+      "refresh_interval_hours": 720,
+      "enabled": false,
+      "note": "Reference retained, but automated refresh is disabled because the official e-Gazette TLS chain cannot currently be validated by the hosted worker. Current Ind AS coverage remains active through ICAI compendia and amendment indexes."
     },
     {
       "title": "Companies (Indian Accounting Standards) Amendment Rules, 2026 - G.S.R. 725(E)",
@@ -83,7 +87,9 @@
       "publisher": "Ministry of Corporate Affairs, Gazette of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
-      "refresh_interval_hours": 720
+      "refresh_interval_hours": 720,
+      "enabled": false,
+      "note": "Reference retained, but automated refresh is disabled because the official e-Gazette TLS chain cannot currently be validated by the hosted worker. Current Ind AS coverage remains active through ICAI compendia and amendment indexes."
     },
     {
       "title": "Compendium of Indian Accounting Standards 2025-2026 - Volume I (Ind AS 101-117)",

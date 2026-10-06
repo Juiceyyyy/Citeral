@@ -31,6 +31,9 @@ _BROWSER_COMPAT_ROOTS = {
     "mca.gov.in",
     "meity.gov.in",
     "mha.gov.in",
+    "wcd.gov.in",
+    "thc.nic.in",
+    "nclat.nic.in",
     # International / United Nations
     "ohchr.org",
     "treaties.un.org",

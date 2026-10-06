@@ -14,6 +14,13 @@ _ALLOWED_BOT_TYPES = {"general", "study", "legal", "accounting", "health", "port
 _ALLOWED_COVERAGE = {"active", "partial", "planned", "deprecated"}
 
 
+def _source_enabled(source: dict[str, object]) -> bool:
+    value = source.get("enabled", True)
+    if not isinstance(value, bool):
+        raise ValueError(f"Source enabled must be a boolean: {source.get('title', 'unknown source')}")
+    return value
+
+
 def _has_canonical_memberships(conn: psycopg.Connection[object]) -> bool:
     row = conn.execute(
         """
@@ -52,7 +59,7 @@ def import_manifest(path: str) -> None:
         raise ValueError(f"Unsupported bot types in manifest: {', '.join(invalid_types)}")
 
     sources = payload.get("sources", [])
-    active_urls = [str(source["canonical_url"]) for source in sources]
+    active_urls = [str(source["canonical_url"]) for source in sources if _source_enabled(source)]
 
     settings = Settings.from_env()
     with psycopg.connect(settings.database_url, row_factory=dict_row) as conn, conn.transaction():
@@ -103,6 +110,7 @@ def import_manifest(path: str) -> None:
             conn.execute("update public.source_registry set enabled=false where knowledge_base_id=%s", (kb["id"],))
 
         for source in sources:
+            source_enabled = _source_enabled(source)
             canonical_url = str(source["canonical_url"])
             if canonical_memberships:
                 source_row = conn.execute(
@@ -124,22 +132,22 @@ def import_manifest(path: str) -> None:
                               coalesce(%s,refresh_interval_hours)
                             ),
                             last_checked_at=case
-                              when enabled=false or last_refresh_status='failed' then null
+                              when %s and (enabled=false or last_refresh_status='failed') then null
                               else last_checked_at
                             end,
                             last_refresh_status=case
-                              when enabled=false or last_refresh_status='failed' then 'unknown'
+                              when %s and (enabled=false or last_refresh_status='failed') then 'unknown'
                               else last_refresh_status
                             end,
                             consecutive_failures=case
-                              when enabled=false or last_refresh_status='failed' then 0
+                              when %s and (enabled=false or last_refresh_status='failed') then 0
                               else consecutive_failures
                             end,
                             last_error_message=case
-                              when enabled=false or last_refresh_status='failed' then null
+                              when %s and (enabled=false or last_refresh_status='failed') then null
                               else last_error_message
                             end,
-                            enabled=true
+                            enabled=(enabled or %s)
                         where id=%s
                         """,
                         (
@@ -151,6 +159,11 @@ def import_manifest(path: str) -> None:
                             source.get("license_type"),
                             source.get("refresh_interval_hours", 24),
                             source.get("refresh_interval_hours", 24),
+                            source_enabled,
+                            source_enabled,
+                            source_enabled,
+                            source_enabled,
+                            source_enabled,
                             source_row["id"],
                         ),
                     )
@@ -185,12 +198,12 @@ def import_manifest(path: str) -> None:
                                   coalesce(refresh_interval_hours,%s),
                                   coalesce(%s,refresh_interval_hours)
                                 ),
-                                enabled=true,
-                                last_checked_at=null,
-                                last_content_hash=null,
-                                last_refresh_status='unknown',
-                                consecutive_failures=0,
-                                last_error_message=null
+                                enabled=(enabled or %s),
+                                last_checked_at=case when %s then null else last_checked_at end,
+                                last_content_hash=case when %s then null else last_content_hash end,
+                                last_refresh_status=case when %s then 'unknown' else last_refresh_status end,
+                                consecutive_failures=case when %s then 0 else consecutive_failures end,
+                                last_error_message=case when %s then null else last_error_message end
                             where id=%s
                             """,
                             (
@@ -201,6 +214,12 @@ def import_manifest(path: str) -> None:
                                 source.get("license_type"),
                                 source.get("refresh_interval_hours", 24),
                                 source.get("refresh_interval_hours", 24),
+                                source_enabled,
+                                source_enabled,
+                                source_enabled,
+                                source_enabled,
+                                source_enabled,
+                                source_enabled,
                                 source_row["id"],
                             ),
                         )
@@ -211,7 +230,7 @@ def import_manifest(path: str) -> None:
                               knowledge_base_id,title,canonical_url,publisher,authority_level,
                               jurisdiction_country,jurisdiction_region,license_type,refresh_interval_hours,enabled
                             )
-                            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,true)
+                            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                             returning id
                             """,
                             (
@@ -224,6 +243,7 @@ def import_manifest(path: str) -> None:
                                 pack.get("jurisdiction_region"),
                                 source.get("license_type"),
                                 source.get("refresh_interval_hours", 24),
+                                source_enabled,
                             ),
                         ).fetchone()
             else:
@@ -233,7 +253,7 @@ def import_manifest(path: str) -> None:
                       knowledge_base_id,title,canonical_url,publisher,authority_level,
                       jurisdiction_country,jurisdiction_region,license_type,refresh_interval_hours,enabled
                     )
-                    values(%s,%s,%s,%s,%s,%s,%s,%s,%s,true)
+                    values(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     on conflict(knowledge_base_id,canonical_url) do update set
                       title=excluded.title,
                       publisher=excluded.publisher,
@@ -242,7 +262,7 @@ def import_manifest(path: str) -> None:
                       jurisdiction_region=excluded.jurisdiction_region,
                       license_type=excluded.license_type,
                       refresh_interval_hours=excluded.refresh_interval_hours,
-                      enabled=true
+                      enabled=excluded.enabled
                     returning id
                     """,
                     (
@@ -255,6 +275,7 @@ def import_manifest(path: str) -> None:
                         pack.get("jurisdiction_region"),
                         source.get("license_type"),
                         source.get("refresh_interval_hours", 24),
+                        source_enabled,
                     ),
                 ).fetchone()
 
@@ -279,12 +300,12 @@ def import_manifest(path: str) -> None:
                     conn.execute(
                         """
                         insert into public.source_knowledge_bases(source_registry_id,knowledge_base_id,priority,enabled)
-                        values(%s,%s,%s,true)
+                        values(%s,%s,%s,%s)
                         on conflict(source_registry_id,knowledge_base_id) do update set
                           priority=excluded.priority,
-                          enabled=true
+                          enabled=excluded.enabled
                         """,
-                        (source_row["id"], target_id, int(source.get("priority", 50))),
+                        (source_row["id"], target_id, int(source.get("priority", 50)), source_enabled),
                     )
                 else:
                     conn.execute(
