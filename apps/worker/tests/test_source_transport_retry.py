@@ -5,6 +5,18 @@ import httpx
 from grounded_worker import security
 
 
+class _StreamResponse:
+    def __init__(self, response: httpx.Response):
+        self.response = response
+
+    def __enter__(self):
+        return self.response
+
+    def __exit__(self, exc_type, exc, tb):
+        self.response.close()
+        return False
+
+
 class _FakeClient:
     attempts = 0
 
@@ -22,12 +34,13 @@ class _FakeClient:
         if type(self).attempts < 3:
             raise httpx.ReadTimeout("temporary timeout")
         request = httpx.Request(method, url)
-        return httpx.Response(
+        response = httpx.Response(
             200,
             request=request,
             headers={"content-type": "text/plain", "content-length": "2"},
             content=b"ok",
         )
+        return _StreamResponse(response)
 
 
 def test_public_source_retries_transport_timeouts(monkeypatch):
