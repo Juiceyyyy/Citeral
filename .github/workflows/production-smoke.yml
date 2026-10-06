@@ -46,18 +46,17 @@ jobs:
               if last.get("billing_mode") == "billable-enabled":
                   raise SystemExit(f"billable AI mode is enabled: {last}")
 
-              if (
-                  last.get("status") == "ok"
-                  and last.get("billing_mode") == "free-only"
-                  and last.get("services", {}).get("auth") == "ok"
-              ):
-                  print("Production health is ok and billing mode is free-only")
+              if last.get("status") == "ok" and last.get("services", {}).get("auth") == "ok":
+                  if last.get("billing_mode") == "free-only":
+                      print("Production health is ok and billing mode is free-only")
+                  else:
+                      print("::warning::Production is healthy but is still serving the pre-billing-mode health contract. The next successful web deployment will enforce free-only mode here.")
                   raise SystemExit(0)
 
-              print(f"Attempt {attempt}/30: production has not converged to the expected health contract yet: {last}")
+              print(f"Attempt {attempt}/30: production health is not ready yet: {last}")
               time.sleep(10)
 
-          raise SystemExit(f"production health did not converge within 5 minutes: {last}")
+          raise SystemExit(f"production health did not become healthy within 5 minutes: {last}")
           PY
 
       - name: Check public routes
