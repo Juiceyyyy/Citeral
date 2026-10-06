@@ -4,8 +4,14 @@
     "slug": "corporate-uk-core",
     "description": "Shared United Kingdom company-law and reporting references used by both Legal and Tax & Accounting assistants. Documents are indexed once and reused across both domains.",
     "kind": "jurisdiction",
-    "bot_types": ["legal", "accounting"],
-    "domains": ["legal", "accounting"],
+    "bot_types": [
+      "legal",
+      "accounting"
+    ],
+    "domains": [
+      "legal",
+      "accounting"
+    ],
     "coverage_status": "partial",
     "jurisdiction_country": "United Kingdom",
     "jurisdiction_region": null,
@@ -27,6 +33,24 @@
       "authority_level": "official",
       "license_type": "open-government-licence-review-required",
       "refresh_interval_hours": 168
+    },
+    {
+      "title": "Running a limited company: directors' responsibilities",
+      "canonical_url": "https://www.gov.uk/running-a-limited-company/directors-responsibilities",
+      "publisher": "GOV.UK / Companies House",
+      "authority_level": "official",
+      "license_type": "open-government-licence-review-required",
+      "refresh_interval_hours": 168,
+      "priority": 70
+    },
+    {
+      "title": "Filing your company's confirmation statement",
+      "canonical_url": "https://www.gov.uk/guidance/filing-your-companys-confirmation-statement",
+      "publisher": "Companies House",
+      "authority_level": "official",
+      "license_type": "open-government-licence-review-required",
+      "refresh_interval_hours": 168,
+      "priority": 70
     }
   ]
 }
