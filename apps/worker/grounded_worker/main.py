@@ -81,7 +81,7 @@ def claim_job(
             order by j.created_at
             for update skip locked
             limit 1
-            """
+            """,
             (list(job_types),),
         ).fetchone()
         if not row:
