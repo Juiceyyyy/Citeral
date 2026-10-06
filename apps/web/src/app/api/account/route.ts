@@ -31,9 +31,9 @@ export async function DELETE(req: Request) {
 
     const { data: storageRows, error: storageListError } = await supabase.rpc("list_own_document_storage_paths");
     if (storageListError) throw new Error(storageListError.message);
-    const paths = (storageRows ?? [])
-      .map((row: { path?: string | null }) => row.path)
-      .filter((path: string | null | undefined): path is string => Boolean(path));
+    const paths: string[] = ((storageRows ?? []) as Array<{ path: string | null }>)
+      .map((row) => row.path)
+      .filter((path): path is string => typeof path === "string" && path.length > 0);
 
     const admin = createAdminClient();
 
