@@ -30,6 +30,7 @@ jobs:
         shell: bash
         run: |
           if [[ -z "$DATABASE_URL" ]]; then
+            echo "database=false" >> "$GITHUB_OUTPUT"
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "::warning::DATABASE_URL is not configured; encrypted backup skipped."
             exit 0
@@ -41,32 +42,35 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::BACKUP_PASSPHRASE is not configured. The dump will be validated in-memory for this run, but no backup artifact will be persisted."
+            echo "::warning::BACKUP_PASSPHRASE is not configured. The dump will be created and validated, but no backup artifact will be persisted."
           fi
 
-      - name: Install PostgreSQL client
-        if: steps.config.outputs.database == 'true'
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-
-      - name: Create compressed logical backup
+      - name: Create compressed logical backup with PostgreSQL 17
         if: steps.config.outputs.database == 'true'
         shell: bash
         run: |
           set -euo pipefail
           umask 077
-          pg_dump             --format=custom             --compress=9             --no-owner             --no-acl             --file=citeral.dump             "$DATABASE_URL"
+
+          docker run --rm \
+            -e DATABASE_URL \
+            -v "$PWD:/backup" \
+            postgres:17-alpine \
+            sh -c 'pg_dump --format=custom --compress=9 --no-owner --no-acl --file=/backup/citeral.dump "$DATABASE_URL"'
 
           test -s citeral.dump
 
-      - name: Validate backup archive
+      - name: Validate backup archive with PostgreSQL 17
         if: steps.config.outputs.database == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          pg_restore --list citeral.dump > restore.list
+
+          docker run --rm \
+            -v "$PWD:/backup:ro" \
+            postgres:17-alpine \
+            pg_restore --list /backup/citeral.dump > restore.list
+
           test -s restore.list
           grep -q "SCHEMA - public" restore.list
           grep -q "TABLE DATA public" restore.list
@@ -79,12 +83,27 @@ jobs:
         run: |
           set -euo pipefail
           umask 077
+
           stamp="$(date -u +%Y%m%dT%H%M%SZ)"
           name="citeral-${stamp}.dump.gpg"
 
-          gpg             --batch             --yes             --pinentry-mode loopback             --passphrase "$BACKUP_PASSPHRASE"             --symmetric             --cipher-algo AES256             --output "$name"             citeral.dump
+          gpg \
+            --batch \
+            --yes \
+            --pinentry-mode loopback \
+            --passphrase "$BACKUP_PASSPHRASE" \
+            --symmetric \
+            --cipher-algo AES256 \
+            --output "$name" \
+            citeral.dump
 
-          gpg             --batch             --yes             --pinentry-mode loopback             --passphrase "$BACKUP_PASSPHRASE"             --output /tmp/citeral-verify.dump             --decrypt "$name"
+          gpg \
+            --batch \
+            --yes \
+            --pinentry-mode loopback \
+            --passphrase "$BACKUP_PASSPHRASE" \
+            --output /tmp/citeral-verify.dump \
+            --decrypt "$name"
 
           cmp --silent citeral.dump /tmp/citeral-verify.dump
           sha256sum "$name" > "$name.sha256"
