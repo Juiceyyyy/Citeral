@@ -44,7 +44,7 @@ Keep Vercel AI Gateway/OpenAI credentials unset for the zero-cost deployment.
 
 ## 3. Free ingestion worker: GitHub Actions
 
-The public repository contains `.github/workflows/free-worker.yml`. It runs every 15 minutes and can also be started manually. Standard GitHub-hosted runners for public repositories are used instead of a paid always-on worker.
+The public repository contains `.github/workflows/free-worker.yml`. It runs hourly and can also be started manually or immediately by relevant worker/knowledge-pack changes. Private document ingestion has a separate queue-aware workflow that checks frequently without starting the heavy worker when no upload is waiting.
 
 Add these repository Actions secrets:
 
