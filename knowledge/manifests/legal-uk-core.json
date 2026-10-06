@@ -40,15 +40,6 @@
       "license_type": "open-government-licence-review-required",
       "refresh_interval_hours": 168,
       "priority": 70
-    },
-    {
-      "title": "The Human Rights Act",
-      "canonical_url": "https://www.equalityhumanrights.com/human-rights/human-rights-act",
-      "publisher": "Equality and Human Rights Commission",
-      "authority_level": "official",
-      "license_type": "official-public-body-source-review-required",
-      "refresh_interval_hours": 168,
-      "priority": 70
     }
   ]
 }
