@@ -1,4 +1,5 @@
 name: Responsive visual QA
+# Workflow-file changes intentionally retrigger this release gate.
 
 on:
   workflow_dispatch:

@@ -1,4 +1,5 @@
 name: RAG release gates
+# Workflow-file changes intentionally retrigger this release gate.
 
 on:
   workflow_dispatch:
