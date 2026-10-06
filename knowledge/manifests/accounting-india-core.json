@@ -47,8 +47,8 @@
     },
     {
       "title": "Companies Act, 2013",
-      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/15198/1/the_companies_act%2C_2013_no._18_of_2013_date_29.08.2013.pdf",
-      "publisher": "India Code, Legislative Department, Government of India",
+      "canonical_url": "https://www.mca.gov.in/Ministry/pdf/CompaniesAct2013.pdf",
+      "publisher": "Ministry of Corporate Affairs, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
@@ -100,6 +100,24 @@
       "authority_level": "standard",
       "license_type": "authoritative-professional-reference",
       "refresh_interval_hours": 168
+    },
+    {
+      "title": "Indian Accounting Standards rules and amendments index",
+      "canonical_url": "https://www.icai.org/post/12125%26c_id%3D420",
+      "publisher": "Institute of Chartered Accountants of India",
+      "authority_level": "standard",
+      "license_type": "authoritative-professional-reference",
+      "refresh_interval_hours": 168,
+      "priority": 80
+    },
+    {
+      "title": "Compendium of Indian Accounting Standards",
+      "canonical_url": "https://www.icai.org/post/compendium-of-indian-accounting-standards",
+      "publisher": "Institute of Chartered Accountants of India",
+      "authority_level": "standard",
+      "license_type": "authoritative-professional-reference",
+      "refresh_interval_hours": 168,
+      "priority": 80
     }
   ]
 }
