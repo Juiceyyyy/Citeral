@@ -159,3 +159,12 @@ jobs:
             echo "One or more registered government sources could not be refreshed from this GitHub-hosted runner."
             echo "This does not block private document ingestion. Review the refresh-step logs for the affected official URLs."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check curated source health
+        if: steps.config.outputs.ready == 'true'
+        working-directory: apps/worker
+        shell: bash
+        run: |
+          set -o pipefail
+          grounded-source-health | tee /tmp/citeral-source-health.md
+          cat /tmp/citeral-source-health.md >> "$GITHUB_STEP_SUMMARY"
