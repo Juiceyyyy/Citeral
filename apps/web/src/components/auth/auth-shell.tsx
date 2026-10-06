@@ -22,7 +22,7 @@ export function AuthShell({
   return (
     <main className="min-h-dvh lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(420px,560px)]">
       <section className="hidden border-r border-border bg-surface-soft lg:flex lg:min-h-dvh lg:flex-col lg:justify-between lg:p-10 xl:p-14">
-        <Link href="/" className="inline-flex w-fit" aria-label="Provenance home">
+        <Link href="/" className="inline-flex w-fit" aria-label="Citeral home">
           <BrandLockup priority markClassName="size-10" textClassName="text-[19px]" />
         </Link>
         <div className="max-w-xl pb-8">
@@ -33,7 +33,7 @@ export function AuthShell({
             Your sources stay central to the answer.
           </h2>
           <p className="mt-5 max-w-lg text-sm leading-7 text-muted-foreground">
-            Provenance combines specialist assistants, private documents and curated knowledge in one focused workspace built for traceability.
+            Citeral combines specialist assistants, private documents and curated knowledge in one focused workspace built for traceability.
           </p>
           <div className="mt-8 space-y-3">
             {principles.map((principle) => (
@@ -44,7 +44,7 @@ export function AuthShell({
             ))}
           </div>
         </div>
-        <p className="text-[11px] text-subtle-foreground">Provenance · Private knowledge, inspectable answers.</p>
+        <p className="text-[11px] text-subtle-foreground">Citeral · Private knowledge, inspectable answers.</p>
       </section>
 
       <section className="flex min-h-dvh items-center justify-center px-4 py-8 sm:px-8 lg:px-10">
