@@ -5,7 +5,7 @@ export function BrandMark({ className, priority = false }: { className?: string;
   return (
     <span className={cn("relative inline-flex size-10 shrink-0 overflow-hidden rounded-[14px] bg-transparent", className)}>
       <Image
-        src="/citeral-mark.png"
+        src="/citeral-mark.svg"
         alt="Citeral logo"
         fill
         priority={priority}
