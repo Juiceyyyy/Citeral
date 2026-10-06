@@ -153,7 +153,7 @@ jobs:
                           break
               return data.decode("utf-8", "replace").strip("\x00\r\n ")
 
-          print(f"ClamAV reload response: {command(b'zRELOAD\\0')}")
+          print(f"ClamAV reload response: {command(b'zRELOAD\0')}")
           last = ""
           for _ in range(24):
               last = command(b"zVERSION\0")
