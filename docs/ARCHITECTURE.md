@@ -1,6 +1,6 @@
 # Architecture
 
-Provenance is a multi-tenant RAG SaaS. A bot is configuration, not a separate application: behavior/policy + attached knowledge bases + optional tools + jurisdiction + model policy.
+Citeral is a multi-tenant RAG SaaS. A bot is configuration, not a separate application: behavior/policy + attached knowledge bases + optional tools + jurisdiction + model policy.
 
 ## Request path
 
@@ -17,7 +17,7 @@ Provenance is a multi-tenant RAG SaaS. A bot is configuration, not a separate ap
 
 `browser -> signed private Storage upload -> document/version/job rows -> Python worker -> Docling -> HybridChunker -> embeddings -> pgvector chunks`
 
-The worker uses `FOR UPDATE SKIP LOCKED`, retry limits, stale-job recovery, content hashes, page provenance, headings, and idempotent per-version chunk replacement.
+The worker uses `FOR UPDATE SKIP LOCKED`, retry limits, stale-job recovery, content hashes, page source-location metadata, headings, and idempotent per-version chunk replacement.
 
 ## Knowledge packs
 

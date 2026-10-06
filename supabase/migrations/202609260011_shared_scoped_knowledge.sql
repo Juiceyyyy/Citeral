@@ -1,4 +1,4 @@
--- Shared/scoped knowledge architecture for Provenance AI.
+-- Shared/scoped knowledge architecture for Citeral.
 -- One indexed document can belong to many knowledge packs without duplicating bytes/chunks.
 
 alter table public.profiles

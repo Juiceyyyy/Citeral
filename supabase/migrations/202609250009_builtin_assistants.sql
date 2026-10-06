@@ -1,4 +1,4 @@
--- Provenance AI: built-in assistants are ready for every user.
+-- Citeral: built-in assistants are ready for every user.
 -- Custom assistants remain user-created; built-ins stay editable but are provisioned automatically.
 
 alter table public.bots

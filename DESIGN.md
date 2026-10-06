@@ -1,10 +1,10 @@
-# Provenance UI Design System
+# Citeral UI Design System
 
 ## Product character
-Provenance should feel calm, precise, private, and inspectable. The interface is a professional knowledge workspace, not an AI demo. Visual decisions should support reading, source inspection, configuration, and long chat sessions without competing with the work.
+Citeral should feel calm, precise, private, and inspectable. The interface is a professional knowledge workspace, not an AI demo. Visual decisions should support reading, source inspection, configuration, and long chat sessions without competing with the work.
 
 ## Reference direction
-Framer is used as an inspiration board for restraint, typography, information hierarchy, product-in-context presentation, and responsive polish. Do not copy Framer branding, logos, layouts, or signature assets. Provenance keeps its own evidence-blue accent and product identity.
+Framer is used as an inspiration board for restraint, typography, information hierarchy, product-in-context presentation, and responsive polish. Do not copy Framer branding, logos, layouts, or signature assets. Citeral keeps its own evidence-blue accent and product identity.
 
 ## Visual rules
 - Dark neutral canvas; avoid ambient radial gradients, glassmorphism, decorative glows, and glossy UI.

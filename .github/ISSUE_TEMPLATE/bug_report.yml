@@ -1,11 +1,11 @@
 name: Bug report
-description: Report a reproducible problem in Provenance AI
+description: Report a reproducible problem in Citeral
 title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: "Thanks for helping improve Provenance AI. Do not include secrets or private documents."
+      value: "Thanks for helping improve Citeral. Do not include secrets or private documents."
   - type: textarea
     id: description
     attributes:

@@ -1,6 +1,6 @@
-# Contributing to Provenance AI
+# Contributing to Citeral
 
-Thanks for helping improve Provenance AI.
+Thanks for helping improve Citeral.
 
 ## Before you start
 

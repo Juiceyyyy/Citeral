@@ -1,5 +1,5 @@
 -- Backfill chunks indexed before compact metadata was introduced.
--- page_start/page_end and heading_path already store the common provenance fields.
+-- page_start/page_end and heading_path already store the common source-location fields.
 -- Preserve only non-contiguous page lists with >2 pages, matching the current worker.
 
 set local lock_timeout = '5s';

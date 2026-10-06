@@ -1,10 +1,10 @@
-# Provenance AI scalability invariants
+# Citeral scalability invariants
 
 This document records the constraints that keep the RAG architecture safe on free-tier infrastructure while leaving a clean path to larger deployments.
 
 ## Durable knowledge, transient raw files
 
-Raw uploads are ingestion inputs, not the long-term knowledge representation. After successful parsing, chunking, malware scanning, embedding and database commit, private raw objects are deleted by default. Durable state is the normalized document/version record, provenance-aware chunks, search indexes and embeddings.
+Raw uploads are ingestion inputs, not the long-term knowledge representation. After successful parsing, chunking, malware scanning, embedding and database commit, private raw objects are deleted by default. Durable state is the normalized document/version record, source-aware chunks, search indexes and embeddings.
 
 Public authoritative sources are re-fetchable from canonical URLs. Private source retention can be introduced later as an explicit quota-consuming option without changing the retrieval model.
 
@@ -38,7 +38,7 @@ Latency metadata records access, embedding, retrieval, pre-model and end-to-end 
 
 ## Storage efficiency roadmap
 
-The current 1024-dimensional BGE-M3 space remains compatible while optimizations roll out. The next storage migration is to pgvector `halfvec(1024)` after CI and RPC compatibility verification. Full Docling metadata is not persisted per chunk when equivalent provenance is already represented by dedicated columns.
+The current 1024-dimensional BGE-M3 space remains compatible while optimizations roll out. The next storage migration is to pgvector `halfvec(1024)` after CI and RPC compatibility verification. Full Docling metadata is not persisted per chunk when equivalent source context is already represented by dedicated columns.
 
 ## Failure handling
 

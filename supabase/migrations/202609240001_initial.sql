@@ -1,4 +1,4 @@
--- Provenance AI: production baseline schema
+-- Citeral: production baseline schema
 -- Target: Supabase Postgres 17+
 
 create extension if not exists pgcrypto;

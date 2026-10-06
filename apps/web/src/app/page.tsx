@@ -16,7 +16,7 @@ export default function LandingPage() {
   return (
     <main className="min-h-dvh bg-background">
       <nav className="mx-auto flex h-[72px] w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" aria-label="Provenance home">
+        <Link href="/" aria-label="Citeral home">
           <BrandLockup priority markClassName="size-10" textClassName="text-[20px]" />
         </Link>
         <div className="flex items-center gap-1.5">

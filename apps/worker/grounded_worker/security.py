@@ -88,7 +88,7 @@ def _browser_compat_allowed(url: str) -> bool:
 def _request_headers(url: str, *, browser_compat: bool) -> dict[str, str]:
     if not browser_compat:
         return {
-            "User-Agent": "ProvenanceKnowledgeBot/1.0 (+source-refresh)",
+            "User-Agent": "CiteralKnowledgeBot/1.0 (+source-refresh)",
             "Accept": "application/pdf,text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.5",
         }
 

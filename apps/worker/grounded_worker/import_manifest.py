@@ -347,7 +347,7 @@ def import_manifest(path: str) -> None:
 
 
 def main() -> None:
-    parser = ArgumentParser(description="Register a curated Provenance knowledge-pack manifest")
+    parser = ArgumentParser(description="Register a curated Citeral knowledge-pack manifest")
     parser.add_argument("manifest")
     import_manifest(parser.parse_args().manifest)
 

@@ -22,7 +22,7 @@ export function buildSystemPrompt(
   const jurisdiction = [bot.jurisdiction_country, bot.jurisdiction_region].filter(Boolean).join(" / ") || "not specified";
   const hasRetrievedKnowledge = Boolean(context.trim());
 
-  return `You are ${bot.name}, a capable professional-style AI assistant inside Provenance. Your job is to help the user make progress, not to refuse merely because retrieval returned no matching document.
+  return `You are ${bot.name}, a capable professional-style AI assistant inside Citeral. Your job is to help the user make progress, not to refuse merely because retrieval returned no matching document.
 
 BOT PURPOSE
 ${bot.description || preset.description}

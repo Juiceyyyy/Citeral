@@ -96,7 +96,7 @@ export function BotSettingsForm({ bot, publicPacks = [], linkedPackIds = [] }: {
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface-soft p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-2xl">
             <div className="flex items-center gap-2"><span className="text-xs font-medium text-[#cbd2dc]">Built-in preset</span>{bot.preset_version ? <span className="text-[10px] text-subtle-foreground">v{bot.preset_version}</span> : null}</div>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">Your changes layer on top of Provenance’s specialist role and safeguards.</p>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">Your changes layer on top of Citeral’s specialist role and safeguards.</p>
           </div>
           <Button type="button" size="sm" variant="secondary" onClick={restorePreset}><RotateCcw className="size-3.5" />Restore defaults</Button>
         </div>

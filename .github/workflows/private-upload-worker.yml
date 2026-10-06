@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: provenance-private-upload-worker
+  group: citeral-private-upload-worker
   cancel-in-progress: false
 
 jobs:
