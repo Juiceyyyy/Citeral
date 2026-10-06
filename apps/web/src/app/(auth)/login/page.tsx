@@ -39,7 +39,7 @@ export default function LoginPage() {
         {error ? <p role="alert" className="rounded-lg border border-red-500/20 bg-red-500/[.06] px-3 py-2 text-xs leading-5 text-red-200">{error}</p> : null}
         <Button className="h-11 w-full" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</Button>
       </form>
-      <p className="mt-6 text-center text-sm text-muted-foreground">New to Provenance? <Link className="font-medium text-foreground hover:text-[#c7d9ff]" href="/signup">Create a workspace</Link></p>
+      <p className="mt-6 text-center text-sm text-muted-foreground">New to Citeral? <Link className="font-medium text-foreground hover:text-[#c7d9ff]" href="/signup">Create a workspace</Link></p>
     </AuthShell>
   );
 }
