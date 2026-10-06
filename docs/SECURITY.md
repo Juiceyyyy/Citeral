@@ -53,3 +53,8 @@ Daily chat counters are readable by their owner but are no longer directly inser
 Supabase's leaked-password protection (HaveIBeenPwned password screening) is currently available only on the Pro plan and above. The zero-billable reference deployment therefore does not enable it. This advisor warning is expected on Supabase Free and must not be "fixed" by upgrading the project automatically.
 
 The application still requires at least 8 characters in its signup and password-reset UI, recommends a unique password, keeps email confirmation enabled, and supports external OAuth where configured. If the deployment is deliberately upgraded to Supabase Pro later, enable leaked-password protection as part of that explicit billing decision.
+
+
+## Backup and recovery
+
+The reference deployment uses a scheduled encrypted logical backup workflow. Plaintext database dumps are never uploaded from this public repository. Persistent backup artifacts require the separate `BACKUP_PASSPHRASE` Actions secret and are retained for a short rolling recovery window to remain within free GitHub artifact storage. See `docs/OPERATIONS.md` for restore verification and incident procedures.

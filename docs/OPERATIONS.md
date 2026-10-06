@@ -1,94 +1,82 @@
-# Production operations
+# Production operations runbook
 
-Citeral's reference deployment is deliberately zero-billable. Operational controls must fail closed instead of enabling paid infrastructure automatically.
+This runbook applies to the reference deployment at `citeral.vercel.app`. It preserves the project's zero-billable-services rule.
 
-## Health
+## Daily encrypted database backup
 
-Public health endpoint:
+Workflow: `.github/workflows/backup.yml`
 
-`GET /api/health`
+The workflow creates a compressed PostgreSQL custom-format dump using the existing `DATABASE_URL`, validates that the archive is readable, encrypts it with AES-256 through GnuPG, decrypts a temporary copy to verify the ciphertext, and uploads only the encrypted artifact.
 
-It verifies that the web runtime is serving and that Supabase Auth is reachable. It also exposes only the safe AI billing-mode state (`free-only` or `billable-enabled`) without exposing credentials. It returns `200` when healthy and `503` when degraded. Responses are `no-store` and contain no secrets or user data.
+The public repository must never receive a plaintext database dump.
 
-`.github/workflows/production-smoke.yml` checks the public app periodically and runs database/RLS probes when the repository `DATABASE_URL` secret is configured.
+### Required secret
 
-## Security monitoring
+Create one repository Actions secret manually:
 
-- GitHub CI: TypeScript typecheck, ESLint, Next.js production build, Ruff and pytest.
-- CodeQL: JavaScript/TypeScript and Python scanning.
-- Dependabot: npm, pip and GitHub Actions dependency updates.
-- Supabase security advisor: review after every schema/RLS/function change.
-- Source health: the free RAG worker reports degraded authoritative sources and fails if an active pack has no usable indexed evidence.
-- Malware scanning: hosted ingestion uses ClamAV fail-closed.
+- `BACKUP_PASSPHRASE`: a long random passphrase used only for backup encryption.
 
-Do not remove a security warning merely to make a dashboard green. Fix the root cause or document an accepted platform limitation.
+Do not reuse the Supabase password, GitHub token, OAuth secret, or any application API key.
 
-## Tenant isolation
+The workflow deliberately remains non-destructive when this secret is missing: it validates that a dump can be produced but does not persist a backup artifact.
 
-`supabase/tests/tenant_isolation_live.sql` creates two disposable identities and representative private assistant, knowledge, retrieval, chat, portfolio and Storage records inside a transaction. It impersonates each authenticated JWT role, proves cross-tenant reads and updates are blocked, proves scoped retrieval cannot leak private chunks, verifies the owner still has access, and rolls everything back.
+Encrypted artifacts are retained for three days to stay within GitHub Actions free artifact storage limits. This is a short recovery window, not an enterprise backup SLA.
 
-## Abuse controls
+## Restore procedure
 
-Expensive authenticated operations use database-backed burst limits in addition to the daily message quota.
+1. Download an encrypted `citeral-*.dump.gpg` artifact and its `.sha256` file from the corresponding successful backup workflow run.
+2. Verify the checksum:
+   `sha256sum -c citeral-*.dump.gpg.sha256`
+3. Decrypt locally:
+   `gpg --output citeral.dump --decrypt citeral-*.dump.gpg`
+4. Inspect before restoring:
+   `pg_restore --list citeral.dump > restore.list`
+5. Restore into a disposable PostgreSQL/Supabase test environment first. Never perform the first restore attempt directly against production.
+6. Run:
+   - `supabase/tests/rls_smoke.sql`
+   - `supabase/tests/tenant_isolation_live.sql`
+   - application health and auth smoke tests
+7. Only after the test restore passes should the dump be used for a production recovery.
 
-Current defaults:
+A managed Supabase Free project does not provide the same backup/RPO guarantees as a paid production plan. This workflow is the zero-cost reference deployment's compensating control.
 
-- chat: 30 requests / 60 seconds
-- upload preparation: 20 / 60 seconds
-- upload finalization: 20 / 60 seconds
-- conversation creation: 30 / 60 seconds
-- portfolio writes: 10 / 60 seconds
-- account export: 4 / hour
-- account deletion attempts: 3 / hour
+## Deployment policy
 
-Vercel Hobby includes DDoS mitigation and a limited free custom-WAF allowance. Application/database rate limits remain authoritative. Do not enable paid managed rules, Deep Analysis, or any feature that can create billable usage without an explicit billing decision.
-
-## Account lifecycle
-
-Settings provides:
-
-- JSON account-data export
-- permanent account deletion
-
-Deletion removes user-owned private Storage objects before deleting the Auth user, revokes refresh sessions, and relies on database foreign keys/RLS-safe cleanup for remaining account-owned rows.
-
-Never test account deletion against a real account you need to keep. Use a disposable test identity.
-
-## Backups and restore
-
-Supabase Free is not a substitute for an operator-controlled disaster-recovery copy.
-
-For the public reference deployment:
-
-1. Keep every schema change represented in `supabase/migrations/`.
-2. Keep curated source manifests in Git.
-3. Do not upload raw production database dumps to this public repository or public GitHub Actions artifacts.
-4. Before material releases, create an encrypted operator-controlled database dump locally using the Supabase pooler/direct database credentials and store it outside the public repository.
-5. Test restoration into an isolated disposable Supabase project before relying on the backup.
-6. Private uploaded source files may contain sensitive data; backup them only to an approved encrypted location and preserve access-control/deletion requirements.
-
-A fully automated off-provider backup requires a private destination and credentials. The zero-billable public repository intentionally does not invent or provision one.
+- Production source of truth: GitHub `main`.
+- Required checks expected before release: CI, CodeQL, responsive visual QA, production RLS/tenant smoke tests where triggered.
+- Vercel preview deployments are disabled on the reference project to conserve Hobby deployment quota.
+- Never enable a paid build machine, paid AI provider, paid Supabase feature, or paid integration without an explicit billing decision.
+- `ALLOW_BILLABLE_AI` must remain absent or `false` on the free reference deployment.
+- The public `/api/health` endpoint reports `billing_mode: free-only` once the current health contract is deployed.
 
 ## Incident response
 
-If credentials are suspected to be exposed:
+If authorization or cross-tenant isolation is suspected:
 
-1. Rotate the affected Supabase/Cloudflare/OAuth credential at the provider.
-2. Update the corresponding Vercel/GitHub secret.
-3. Revoke affected user sessions when auth compromise is possible.
-4. Check Vercel runtime errors, Supabase Auth/database/storage logs and GitHub worker history.
-5. Disable a compromised integration rather than falling back to a paid or less secure provider.
-6. Record the scope and remediation without logging private document contents or tokens.
+1. Stop public sign-in or take the affected API path offline.
+2. Preserve relevant provider logs without copying document contents into public issues.
+3. Re-run the production tenant-isolation probe.
+4. Rotate affected server-side credentials.
+5. Invalidate sessions where appropriate.
+6. Patch and validate RLS first; prompts are never an authorization boundary.
+7. Document the incident privately before restoring normal access.
 
-## Release rule
+If ingestion safety is suspected:
 
-A release is not considered healthy until:
+1. Stop the private/curated ingestion workflow.
+2. Do not parse the questionable object manually on a workstation.
+3. Check ClamAV signature freshness and worker logs.
+4. Remove the object from private Storage if it is confirmed unsafe.
+5. Resume ingestion only after the scanner and parser boundary are healthy.
 
-- production Vercel deployment is READY;
-- CI is green;
-- CodeQL is green;
-- responsive visual QA is green when UI changed;
-- Supabase security advisor has no unresolved actionable finding;
-- RAG release gate is green for prompt/retrieval changes;
-- source-health gate retains usable evidence for every active/partial pack;
-- `/api/health` returns 200 and reports `billing_mode: "free-only"`.
+## External service limitations
+
+The zero-cost reference deployment intentionally accepts the following limitations:
+
+- Vercel Hobby deployment/build quotas can temporarily delay a new production release.
+- GitHub scheduled workflows can be delayed.
+- Supabase Free leaked-password screening is unavailable.
+- Supabase Free does not provide enterprise backup/RPO guarantees.
+- External government sources can be temporarily unreachable.
+
+Health checks and source freshness gates should fail safely rather than silently enabling a paid fallback.

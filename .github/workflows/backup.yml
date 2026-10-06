@@ -1,0 +1,106 @@
+name: Encrypted database backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 3 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: citeral-encrypted-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+
+    steps:
+      - name: Check backup configuration
+        id: config
+        shell: bash
+        run: |
+          if [[ -z "$DATABASE_URL" ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DATABASE_URL is not configured; encrypted backup skipped."
+            exit 0
+          fi
+
+          echo "database=true" >> "$GITHUB_OUTPUT"
+
+          if [[ -n "$BACKUP_PASSPHRASE" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::BACKUP_PASSPHRASE is not configured. The dump will be validated in-memory for this run, but no backup artifact will be persisted."
+          fi
+
+      - name: Install PostgreSQL client
+        if: steps.config.outputs.database == 'true'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Create compressed logical backup
+        if: steps.config.outputs.database == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          pg_dump             --format=custom             --compress=9             --no-owner             --no-acl             --file=citeral.dump             "$DATABASE_URL"
+
+          test -s citeral.dump
+
+      - name: Validate backup archive
+        if: steps.config.outputs.database == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          pg_restore --list citeral.dump > restore.list
+          test -s restore.list
+          grep -q "SCHEMA - public" restore.list
+          grep -q "TABLE DATA public" restore.list
+          echo "Logical backup archive is readable and contains the public application schema."
+
+      - name: Encrypt backup
+        if: steps.config.outputs.ready == 'true'
+        id: encrypt
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          name="citeral-${stamp}.dump.gpg"
+
+          gpg             --batch             --yes             --pinentry-mode loopback             --passphrase "$BACKUP_PASSPHRASE"             --symmetric             --cipher-algo AES256             --output "$name"             citeral.dump
+
+          gpg             --batch             --yes             --pinentry-mode loopback             --passphrase "$BACKUP_PASSPHRASE"             --output /tmp/citeral-verify.dump             --decrypt "$name"
+
+          cmp --silent citeral.dump /tmp/citeral-verify.dump
+          sha256sum "$name" > "$name.sha256"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+          rm -f citeral.dump /tmp/citeral-verify.dump restore.list
+
+      - name: Upload encrypted backup
+        if: steps.config.outputs.ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: citeral-db-backup-${{ github.run_id }}
+          path: |
+            ${{ steps.encrypt.outputs.name }}
+            ${{ steps.encrypt.outputs.name }}.sha256
+          retention-days: 3
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Remove plaintext dump
+        if: always()
+        shell: bash
+        run: rm -f citeral.dump /tmp/citeral-verify.dump restore.list
