@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+  <body style="margin:0;background:#0b0d10;font-family:Inter,Arial,sans-serif;color:#f5f7fa;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0b0d10;padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#12151a;border:1px solid #252a31;border-radius:16px;">
+          <tr><td style="padding:30px 32px;">
+            <table role="presentation" cellspacing="0" cellpadding="0"><tr>
+              <td><img src="https://citeral.vercel.app/citeral-mark.png" width="34" height="34" alt="Citeral" style="display:block;border:0;"></td>
+              <td style="padding-left:10px;font-size:20px;font-weight:700;color:#ffffff;">Citeral</td>
+            </tr></table>
+            <h1 style="margin:28px 0 10px;font-size:24px;line-height:1.25;color:#ffffff;">Confirm your email address</h1>
+            <p style="margin:0 0 22px;font-size:14px;line-height:1.7;color:#b8bec8;">Confirm this email address to finish creating your Citeral workspace.</p>
+            <p style="margin:0 0 24px;">
+              <a href="{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/app" style="display:inline-block;background:#e7edf6;color:#172033;text-decoration:none;font-size:14px;font-weight:700;padding:12px 18px;border-radius:9px;">Confirm email</a>
+            </p>
+            <p style="margin:0;font-size:12px;line-height:1.7;color:#7f8793;">If you did not create a Citeral account, you can safely ignore this email.</p>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>
