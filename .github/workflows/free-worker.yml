@@ -154,6 +154,14 @@ jobs:
                           break
               return data.decode("utf-8", "replace").strip("\x00\r\n ")
 
+          # The official container refreshes the database files with freshclam,
+          # but its default Unix-socket notify path may not match the TCP clamd
+          # used by GitHub Actions. Explicitly ask the running daemon to reload.
+          with socket.create_connection(("127.0.0.1", 3310), timeout=5) as sock:
+              sock.sendall(b"zRELOAD\0")
+              reply = sock.recv(4096).decode("utf-8", "replace").strip("\x00\r\n ")
+              print(f"ClamAV reload response: {reply}")
+
           last = ""
           for _ in range(24):
               last = version()
