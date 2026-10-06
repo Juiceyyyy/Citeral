@@ -23,6 +23,7 @@ ALLOWED_CONTENT_TYPES = {
     "text/markdown",
     "text/csv",
     "text/html",
+    "application/xhtml+xml",
     "image/png",
     "image/jpeg",
 }
