@@ -9,6 +9,7 @@ on:
     paths:
       - "supabase/migrations/**"
       - "supabase/tests/**"
+      - "apps/web/src/app/api/health/**"
       - ".github/workflows/production-smoke.yml"
 
 permissions:
@@ -23,12 +24,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Check production health and free-only billing mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          health="$(curl --fail --silent --show-error --location --retry 3 --retry-all-errors --max-time 20 https://citeral.vercel.app/api/health)"
+          python - "$health" <<'PY'
+          import json
+          import sys
+
+          payload = json.loads(sys.argv[1])
+          if payload.get("status") != "ok":
+              raise SystemExit(f"production health is not ok: {payload}")
+          if payload.get("billing_mode") != "free-only":
+              raise SystemExit(f"billable AI mode is enabled: {payload}")
+          if payload.get("services", {}).get("auth") != "ok":
+              raise SystemExit(f"Supabase Auth is not healthy: {payload}")
+          print("Production health is ok and billing mode is free-only")
+          PY
+
       - name: Check public routes
         shell: bash
         run: |
           set -euo pipefail
           for url in \
-            https://citeral.vercel.app/api/health \
             https://citeral.vercel.app/ \
             https://citeral.vercel.app/login \
             https://citeral.vercel.app/privacy \

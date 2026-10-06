@@ -6,10 +6,11 @@ export async function GET() {
   const startedAt = Date.now();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const billingMode = process.env.ALLOW_BILLABLE_AI === "true" ? "billable-enabled" : "free-only";
 
   if (!url || !key) {
     return NextResponse.json(
-      { status: "degraded", services: { web: "ok", auth: "misconfigured" } },
+      { status: "degraded", billing_mode: billingMode, services: { web: "ok", auth: "misconfigured" } },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
@@ -24,6 +25,7 @@ export async function GET() {
     return NextResponse.json(
       {
         status: healthy ? "ok" : "degraded",
+        billing_mode: billingMode,
         services: { web: "ok", auth: healthy ? "ok" : `http_${response.status}` },
         latency_ms: Date.now() - startedAt,
         checked_at: new Date().toISOString(),
@@ -34,6 +36,7 @@ export async function GET() {
     return NextResponse.json(
       {
         status: "degraded",
+        billing_mode: billingMode,
         services: { web: "ok", auth: "unreachable" },
         latency_ms: Date.now() - startedAt,
         checked_at: new Date().toISOString(),

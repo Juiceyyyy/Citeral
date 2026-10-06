@@ -8,7 +8,7 @@ Public health endpoint:
 
 `GET /api/health`
 
-It verifies that the web runtime is serving and that Supabase Auth is reachable. It returns `200` when healthy and `503` when degraded. Responses are `no-store` and contain no secrets or user data.
+It verifies that the web runtime is serving and that Supabase Auth is reachable. It also exposes only the safe AI billing-mode state (`free-only` or `billable-enabled`) without exposing credentials. It returns `200` when healthy and `503` when degraded. Responses are `no-store` and contain no secrets or user data.
 
 `.github/workflows/production-smoke.yml` checks the public app periodically and runs database/RLS probes when the repository `DATABASE_URL` secret is configured.
 
@@ -91,4 +91,4 @@ A release is not considered healthy until:
 - Supabase security advisor has no unresolved actionable finding;
 - RAG release gate is green for prompt/retrieval changes;
 - source-health gate retains usable evidence for every active/partial pack;
-- `/api/health` returns 200.
+- `/api/health` returns 200 and reports `billing_mode: "free-only"`.
