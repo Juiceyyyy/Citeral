@@ -120,6 +120,10 @@ def _retry_delay(response: httpx.Response, attempt: int) -> float:
     return min(20.0, float(2**attempt))
 
 
+def _transport_retry_delay(attempt: int) -> float:
+    return min(20.0, float(2**attempt))
+
+
 def fetch_public_source(
     url: str,
     *,
@@ -137,45 +141,56 @@ def fetch_public_source(
         while redirects <= max_redirects:
             validate_public_http_url(current)
             headers = _request_headers(current, browser_compat=browser_compat)
-            with client.stream("GET", current, headers=headers) as response:
-                if response.status_code in {301, 302, 303, 307, 308}:
-                    location = response.headers.get("location")
-                    if not location:
-                        raise UnsafeSourceUrl("Redirect response did not include a Location header")
-                    current = urljoin(current, location)
-                    redirects += 1
-                    browser_compat = False
-                    transient_attempts = 0
-                    continue
+            try:
+                with client.stream("GET", current, headers=headers) as response:
+                    if response.status_code in {301, 302, 303, 307, 308}:
+                        location = response.headers.get("location")
+                        if not location:
+                            raise UnsafeSourceUrl("Redirect response did not include a Location header")
+                        current = urljoin(current, location)
+                        redirects += 1
+                        browser_compat = False
+                        transient_attempts = 0
+                        continue
 
-                if (
-                    response.status_code in {403, 406}
-                    and not browser_compat
-                    and _browser_compat_allowed(current)
-                ):
-                    browser_compat = True
-                    transient_attempts = 0
-                    continue
+                    if (
+                        response.status_code in {403, 406}
+                        and not browser_compat
+                        and _browser_compat_allowed(current)
+                    ):
+                        browser_compat = True
+                        transient_attempts = 0
+                        continue
 
-                if response.status_code in _TRANSIENT_STATUSES and transient_attempts < _MAX_TRANSIENT_ATTEMPTS - 1:
-                    delay = _retry_delay(response, transient_attempts)
-                    transient_attempts += 1
-                    time.sleep(delay)
-                    continue
+                    if response.status_code in _TRANSIENT_STATUSES and transient_attempts < _MAX_TRANSIENT_ATTEMPTS - 1:
+                        delay = _retry_delay(response, transient_attempts)
+                        transient_attempts += 1
+                        time.sleep(delay)
+                        continue
 
-                response.raise_for_status()
-                length = response.headers.get("content-length")
-                if length and int(length) > max_bytes:
-                    raise RuntimeError(f"Source exceeds maximum allowed size of {max_bytes} bytes")
-                body = bytearray()
-                for chunk in response.iter_bytes(chunk_size=64 * 1024):
-                    body.extend(chunk)
-                    if len(body) > max_bytes:
+                    response.raise_for_status()
+                    length = response.headers.get("content-length")
+                    if length and int(length) > max_bytes:
                         raise RuntimeError(f"Source exceeds maximum allowed size of {max_bytes} bytes")
-                return bytes(body), str(response.url), response.headers
+                    body = bytearray()
+                    for chunk in response.iter_bytes(chunk_size=64 * 1024):
+                        body.extend(chunk)
+                        if len(body) > max_bytes:
+                            raise RuntimeError(f"Source exceeds maximum allowed size of {max_bytes} bytes")
+                    return bytes(body), str(response.url), response.headers
+            except (httpx.TimeoutException, httpx.TransportError) as exc:
+                if transient_attempts >= _MAX_TRANSIENT_ATTEMPTS - 1:
+                    raise RuntimeError(
+                        f"Authoritative source transport failed after {_MAX_TRANSIENT_ATTEMPTS} attempts: {exc}"
+                    ) from exc
+                delay = _transport_retry_delay(transient_attempts)
+                transient_attempts += 1
+                if not browser_compat and _browser_compat_allowed(current):
+                    browser_compat = True
+                time.sleep(delay)
+                continue
 
     raise UnsafeSourceUrl(f"Source exceeded {max_redirects} redirects")
-
 
 def scan_with_clamav(payload: bytes, host: str, port: int, timeout_seconds: float = 30.0) -> None:
     """Scan bytes using clamd's INSTREAM protocol. Raises on malware or scanner errors."""

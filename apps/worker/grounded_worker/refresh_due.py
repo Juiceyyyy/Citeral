@@ -8,7 +8,7 @@ from psycopg.rows import dict_row
 from .config import Settings
 from .source_refresh import mark_source_failure, refresh
 
-_MAX_REFRESH_WORKERS = 4
+_MAX_REFRESH_WORKERS = 2
 
 
 def _refresh_one(source_id: str) -> tuple[str, str | None]:

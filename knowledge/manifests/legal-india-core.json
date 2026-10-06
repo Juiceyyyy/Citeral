@@ -9,7 +9,7 @@
     ],
     "jurisdiction_country": "India",
     "jurisdiction_region": null,
-    "version": "2026.09.1",
+    "version": "2026.10",
     "coverage_status": "partial"
   },
   "sources": [
@@ -71,7 +71,7 @@
     },
     {
       "title": "Companies Act, 2013",
-      "canonical_url": "https://www.indiacode.nic.in/indiacode/handle/123456789/2114?view_type=browse",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/15198/1/the_companies_act%2C_2013_no._18_of_2013_date_29.08.2013.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
@@ -79,7 +79,7 @@
     },
     {
       "title": "Code of Civil Procedure, 1908",
-      "canonical_url": "https://www.indiacode.nic.in/indiacode/handle/123456789/2191?view_type=browse",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/2191/1/eng.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
@@ -87,7 +87,7 @@
     },
     {
       "title": "Specific Relief Act, 1963",
-      "canonical_url": "https://www.indiacode.nic.in/indiacode/handle/123456789/1583?view_type=browse",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1583/7/A1963-47.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
@@ -135,7 +135,7 @@
     },
     {
       "title": "Hindu Marriage Act, 1955",
-      "canonical_url": "https://www.indiacode.nic.in/indiacode/handle/123456789/1560?view_type=browse",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/12232/1/the_hindu_marriage_act%2C_1955.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
@@ -143,7 +143,7 @@
     },
     {
       "title": "Hindu Succession Act, 1956",
-      "canonical_url": "https://www.indiacode.nic.in/indiacode/handle/123456789/1713?view_type=browse",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1713/1/AAA1956suc___30.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
@@ -151,7 +151,7 @@
     },
     {
       "title": "Special Marriage Act, 1954",
-      "canonical_url": "https://www.indiacode.nic.in/indiacode/handle/123456789/1387?view_type=browse",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1387/1/A1954-43E.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
@@ -159,7 +159,7 @@
     },
     {
       "title": "Protection of Women from Domestic Violence Act, 2005",
-      "canonical_url": "https://www.indiacode.nic.in/handle/123456789/2021?view_type=browse",
+      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/2021/5/A2005-43.pdf",
       "publisher": "India Code, Legislative Department, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",

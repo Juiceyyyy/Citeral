@@ -139,27 +139,77 @@ def import_manifest(path: str) -> None:
                         ),
                     )
                 else:
+                    # A manifest may move an authoritative source from a brittle landing page
+                    # to a stable direct document URL. Reuse the existing canonical source row
+                    # when the title/publisher and this pack membership identify the same source,
+                    # so URL maintenance does not duplicate indexed documents.
                     source_row = conn.execute(
                         """
-                        insert into public.source_registry(
-                          knowledge_base_id,title,canonical_url,publisher,authority_level,
-                          jurisdiction_country,jurisdiction_region,license_type,refresh_interval_hours,enabled
-                        )
-                        values(%s,%s,%s,%s,%s,%s,%s,%s,%s,true)
-                        returning id
+                        select s.id
+                        from public.source_registry s
+                        join public.source_knowledge_bases sk on sk.source_registry_id=s.id
+                        where sk.knowledge_base_id=%s
+                          and s.title=%s
+                          and s.publisher is not distinct from %s
+                        order by s.created_at
+                        limit 1
                         """,
-                        (
-                            kb["id"],
-                            source["title"],
-                            canonical_url,
-                            source.get("publisher"),
-                            source.get("authority_level", "reference"),
-                            pack.get("jurisdiction_country"),
-                            pack.get("jurisdiction_region"),
-                            source.get("license_type"),
-                            source.get("refresh_interval_hours", 24),
-                        ),
+                        (kb["id"], source["title"], source.get("publisher")),
                     ).fetchone()
+                    if source_row:
+                        conn.execute(
+                            """
+                            update public.source_registry
+                            set canonical_url=%s,
+                                authority_level=%s,
+                                jurisdiction_country=coalesce(jurisdiction_country,%s),
+                                jurisdiction_region=coalesce(jurisdiction_region,%s),
+                                license_type=coalesce(%s,license_type),
+                                refresh_interval_hours=least(
+                                  coalesce(refresh_interval_hours,%s),
+                                  coalesce(%s,refresh_interval_hours)
+                                ),
+                                enabled=true,
+                                last_checked_at=null,
+                                last_content_hash=null,
+                                last_refresh_status='pending',
+                                consecutive_failures=0,
+                                last_error_message=null
+                            where id=%s
+                            """,
+                            (
+                                canonical_url,
+                                source.get("authority_level", "reference"),
+                                pack.get("jurisdiction_country"),
+                                pack.get("jurisdiction_region"),
+                                source.get("license_type"),
+                                source.get("refresh_interval_hours", 24),
+                                source.get("refresh_interval_hours", 24),
+                                source_row["id"],
+                            ),
+                        )
+                    else:
+                        source_row = conn.execute(
+                            """
+                            insert into public.source_registry(
+                              knowledge_base_id,title,canonical_url,publisher,authority_level,
+                              jurisdiction_country,jurisdiction_region,license_type,refresh_interval_hours,enabled
+                            )
+                            values(%s,%s,%s,%s,%s,%s,%s,%s,%s,true)
+                            returning id
+                            """,
+                            (
+                                kb["id"],
+                                source["title"],
+                                canonical_url,
+                                source.get("publisher"),
+                                source.get("authority_level", "reference"),
+                                pack.get("jurisdiction_country"),
+                                pack.get("jurisdiction_region"),
+                                source.get("license_type"),
+                                source.get("refresh_interval_hours", 24),
+                            ),
+                        ).fetchone()
             else:
                 source_row = conn.execute(
                     """

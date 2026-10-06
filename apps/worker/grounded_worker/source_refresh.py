@@ -68,7 +68,7 @@ def refresh(source_id: str) -> None:
             raise SystemExit("Source not found or disabled")
 
         payload, final_url, response_headers = fetch_public_source(
-            source["canonical_url"], max_bytes=settings.max_source_bytes, timeout_seconds=60
+            source["canonical_url"], max_bytes=settings.max_source_bytes, timeout_seconds=75
         )
         if settings.clamav_host:
             scan_with_clamav(payload, settings.clamav_host, settings.clamav_port)
