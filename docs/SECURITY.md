@@ -47,3 +47,9 @@ Cookie-authenticated JSON mutation endpoints reject explicit cross-site browser 
 RLS determines which rows an authenticated principal may update. A separate trigger layer prevents authenticated clients from changing identity/linkage columns such as `organization_id`, `owner_user_id`, bot type, knowledge-base ownership, document-to-KB linkage, version storage paths and conversation ownership after creation. This closes a common gap where a permissive `WITH CHECK` could otherwise allow row reassignment.
 
 Daily chat counters are readable by their owner but are no longer directly insertable/updatable by authenticated clients. Quota consumption is performed by a narrowly scoped `SECURITY DEFINER` helper in the non-exposed `private` schema, reached through a public security-invoker wrapper that still requires an authenticated JWT.
+
+## Free-tier Auth limitation
+
+Supabase's leaked-password protection (HaveIBeenPwned password screening) is currently available only on the Pro plan and above. The zero-billable reference deployment therefore does not enable it. This advisor warning is expected on Supabase Free and must not be "fixed" by upgrading the project automatically.
+
+The application still requires at least 8 characters in its signup and password-reset UI, recommends a unique password, keeps email confirmation enabled, and supports external OAuth where configured. If the deployment is deliberately upgraded to Supabase Pro later, enable leaked-password protection as part of that explicit billing decision.
