@@ -1,16 +1,46 @@
 <!doctype html>
-<html>
-  <body style="margin:0;background:#0b0d10;font-family:Inter,Arial,sans-serif;color:#f5f7fa;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0b0d10;padding:32px 16px;">
-      <tr><td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#12151a;border:1px solid #252a31;border-radius:16px;">
-          <tr><td style="padding:30px 32px;">
-            <strong style="font-size:20px;color:#fff;">Citeral</strong>
-            <h1 style="margin:26px 0 10px;font-size:22px;color:#fff;">Your email address was changed</h1>
-            <p style="margin:0;font-size:14px;line-height:1.7;color:#b8bec8;">The email address on your Citeral account changed from {{ .OldEmail }} to {{ .Email }}. If you did not make this change, secure your account immediately.</p>
-          </td></tr>
-        </table>
-      </td></tr>
-    </table>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <title>Your email address was changed</title>
+</head>
+<body style="margin:0;padding:0;width:100%;background:#0b0c0f;color:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;background:#0b0c0f;border-collapse:collapse;">
+    <tr><td align="center" style="padding:48px 16px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:560px;margin:0 auto;border-collapse:separate;">
+        <tr><td style="padding:0 4px 22px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
+            <td valign="middle" style="width:34px;height:34px;">
+              <div style="box-sizing:border-box;width:30px;height:30px;border:4px solid #f4f5f7;border-right-color:transparent;border-radius:50%;font-size:0;line-height:0;">&nbsp;</div>
+            </td>
+            <td valign="middle" style="padding-left:9px;color:#f4f5f7;font-size:19px;line-height:24px;font-weight:600;letter-spacing:-.65px;">Citeral</td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="background:#101216;border:1px solid #23272f;border-radius:14px;overflow:hidden;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+            <tr><td height="2" style="height:2px;background:#2f6fe4;font-size:0;line-height:0;">&nbsp;</td></tr>
+            <tr><td style="padding:36px 36px 34px;">
+              <p style="margin:0 0 14px;color:#7b838f;font-size:11px;line-height:16px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;">Security notification</p>
+              <h1 style="margin:0;color:#f4f5f7;font-size:26px;line-height:34px;font-weight:650;letter-spacing:-.7px;">Your email address was changed</h1>
+              <p style="margin:13px 0 0;color:#9ba1ac;font-size:14px;line-height:23px;">The email address on your Citeral account changed from {{ .OldEmail }} to {{ .Email }}.</p>
+              
+              
+              
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:31px;"><tr><td height="1" style="height:1px;background:#23272f;font-size:0;line-height:0;">&nbsp;</td></tr></table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-top:21px;"><tr>
+                <td valign="top" style="width:18px;padding-top:5px;"><div style="width:7px;height:7px;background:#78a7ff;border-radius:50%;font-size:0;line-height:0;">&nbsp;</div></td>
+                <td style="color:#7b838f;font-size:12px;line-height:19px;">If you did not make this change, secure your account immediately and review your sign-in methods.</td>
+              </tr></table>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:20px 5px 0;color:#7b838f;font-size:11px;line-height:18px;">Citeral will never ask you to share your password, verification code, or private authentication link.</td></tr>
+        <tr><td style="padding:24px 5px 0;color:#59616d;font-size:10px;line-height:17px;"><span style="color:#9ba1ac;font-weight:500;">Citeral</span>&nbsp;&middot;&nbsp; Private knowledge. Inspectable answers.<br>Automated account email &mdash; please do not reply.</td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
 </html>

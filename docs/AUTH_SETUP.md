@@ -89,6 +89,22 @@ Subject: `Confirm your Citeral email`
 
 Copy `supabase/templates/confirmation.html`.
 
+### Invite user
+Subject: `You've been invited to Citeral`
+
+Copy `supabase/templates/invite.html`.
+
+### Magic link
+Citeral does not expose magic-link login in the product UI, but the branded fallback template is kept in source control in case the provider sends one during administration/testing.
+Subject: `Your Citeral sign-in link`
+
+Copy `supabase/templates/magic_link.html`.
+
+### Reauthentication / verification code
+Subject: `Your Citeral verification code`
+
+Copy `supabase/templates/reauthentication.html`.
+
 ### Reset password / Recovery
 Subject: `Reset your Citeral password`
 
@@ -149,7 +165,11 @@ Recommended sender identity once a Citeral domain exists:
 - From address: `auth@your-citeral-domain`
 - Reply-to: a monitored support address
 
-## 10. Final tests
+## 10. Source-controlled template rule
+
+Keep Supabase Dashboard templates synchronized with `supabase/templates/`. The repository versions deliberately avoid external images and inline SVG so the Supabase preview and major mail clients do not depend on remote image loading.
+
+## 11. Final tests
 
 Test in an incognito/private browser:
 
