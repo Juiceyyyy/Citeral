@@ -25,8 +25,8 @@ class ParsedChunk:
 def _pages(meta: dict[str, Any]) -> list[int]:
     result: set[int] = set()
     for item in meta.get("doc_items", []) or []:
-        for provenance in item.get("prov", []) or []:
-            page = provenance.get("page_no")
+        for source_ref in item.get("prov", []) or []:
+            page = source_ref.get("page_no")
             if isinstance(page, int) and page > 0:
                 result.add(page)
     return sorted(result)
@@ -34,7 +34,7 @@ def _pages(meta: dict[str, Any]) -> list[int]:
 
 def _compact_metadata(pages: list[int]) -> dict[str, Any]:
     # page_start/page_end and heading_path have dedicated indexed columns. Keep JSON
-    # only when the source pages are non-contiguous, which preserves provenance without
+    # only when the source pages are non-contiguous, which preserves source location without
     # duplicating Docling's very large structural payload on every chunk.
     if len(pages) <= 2:
         return {}
