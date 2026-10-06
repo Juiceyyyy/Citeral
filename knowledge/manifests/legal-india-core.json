@@ -2,12 +2,15 @@
   "pack": {
     "name": "India Legal Core",
     "slug": "legal-india-core",
-    "description": "Maintained primary-law foundation for common India legal questions: constitutional, contract, criminal, evidence, civil procedure, property, family, consumer, company, arbitration, limitation, data protection, real-estate and domestic-violence law. Current amendments and case law still require source verification where material.",
+    "description": "Maintained primary-law foundation for common India legal questions. Coverage is intentionally marked partial while some registered official sources remain unavailable to the automated ingestion worker; current amendments and case law still require verification where material.",
     "kind": "jurisdiction",
-    "bot_types": ["legal"],
+    "bot_types": [
+      "legal"
+    ],
     "jurisdiction_country": "India",
     "jurisdiction_region": null,
-    "version": "2026.09.1"
+    "version": "2026.09.1",
+    "coverage_status": "partial"
   },
   "sources": [
     {
