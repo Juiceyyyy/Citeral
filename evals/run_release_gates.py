@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import re
 import sys
 import time
 import urllib.error
@@ -228,6 +227,38 @@ def heuristic_checks(case: dict[str, Any], answer: str) -> tuple[bool, list[str]
     return not failures, failures
 
 
+def first_json_object(raw: str) -> dict[str, Any] | None:
+    start = raw.find("{")
+    if start < 0:
+        return None
+    depth = 0
+    in_string = False
+    escaped = False
+    for index in range(start, len(raw)):
+        char = raw[index]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                try:
+                    parsed = json.loads(raw[start : index + 1])
+                except json.JSONDecodeError:
+                    return None
+                return parsed if isinstance(parsed, dict) else None
+    return None
+
+
 def judge_case(case: dict[str, Any], answer: str) -> tuple[bool, str]:
     judge_payload = {
         "id": case["id"],
@@ -251,12 +282,8 @@ a citation is only valid if it uses a marker/source actually supplied in the eva
         ],
         220,
     )
-    match = re.search(r"\{.*\}", raw, flags=re.DOTALL)
-    if not match:
-        return False, f"judge returned non-JSON: {raw[:300]}"
-    try:
-        parsed = json.loads(match.group(0))
-    except json.JSONDecodeError:
+    parsed = first_json_object(raw)
+    if parsed is None:
         return False, f"judge returned invalid JSON: {raw[:300]}"
     return bool(parsed.get("pass")), str(parsed.get("reason") or "no judge reason")
 
