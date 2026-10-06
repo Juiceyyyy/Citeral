@@ -13,7 +13,7 @@ export type LocalAttachmentPayload = {
   text: string;
 };
 
-const DB_NAME = "provenance-local-knowledge-v1";
+const DB_NAME = "citeral-local-knowledge-v1";
 const STORE_NAME = "attachments";
 const DB_VERSION = 1;
 const MAX_CACHED_CHARS = 500_000;
