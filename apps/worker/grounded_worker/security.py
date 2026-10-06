@@ -44,6 +44,7 @@ _BROWSER_COMPAT_ROOTS = {
     # United Kingdom authorities
     "gov.uk",
     "legislation.gov.uk",
+    "equalityhumanrights.com",
     "nhs.uk",
 }
 _TRANSIENT_STATUSES = {429, 500, 502, 503, 504}
