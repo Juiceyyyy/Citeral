@@ -9,7 +9,7 @@
     ],
     "jurisdiction_country": "India",
     "jurisdiction_region": null,
-    "version": "2026.10.1",
+    "version": "2026.10.2",
     "coverage_status": "partial"
   },
   "sources": [
@@ -39,8 +39,8 @@
     },
     {
       "title": "Consumer Protection Act, 2019",
-      "canonical_url": "https://consumeraffairs.nic.in/sites/default/files/CP%20Act%202019.pdf",
-      "publisher": "Department of Consumer Affairs, Government of India",
+      "canonical_url": "https://thc.nic.in/Central%20Governmental%20Acts/Consumer%20Protection%20Act%2C%202019.pdf",
+      "publisher": "Tripura High Court / National Informatics Centre, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
@@ -79,8 +79,8 @@
     },
     {
       "title": "Code of Civil Procedure, 1908",
-      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/2191/1/eng.pdf",
-      "publisher": "India Code, Legislative Department, Government of India",
+      "canonical_url": "https://www.thc.nic.in/Central%20Governmental%20Acts/Code%20of%20Civil%20Procedure%201908.pdf",
+      "publisher": "Tripura High Court / National Informatics Centre, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
@@ -95,8 +95,8 @@
     },
     {
       "title": "Limitation Act, 1963",
-      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1565/5/A1963-36.pdf",
-      "publisher": "India Code, Legislative Department, Government of India",
+      "canonical_url": "https://thc.nic.in/Central%20Governmental%20Acts/Limitation%20Act%2C%201963.pdf",
+      "publisher": "Tripura High Court / National Informatics Centre, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
@@ -127,8 +127,8 @@
     },
     {
       "title": "Arbitration and Conciliation Act, 1996",
-      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/1978/3/a1996-26.pdf",
-      "publisher": "India Code, Legislative Department, Government of India",
+      "canonical_url": "https://thc.nic.in/Central%20Governmental%20Acts/Arbitration%20and%20Conciliation%20Act%2C%201996.pdf",
+      "publisher": "Tripura High Court / National Informatics Centre, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
