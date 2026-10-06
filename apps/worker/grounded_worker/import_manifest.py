@@ -123,6 +123,22 @@ def import_manifest(path: str) -> None:
                               coalesce(refresh_interval_hours,%s),
                               coalesce(%s,refresh_interval_hours)
                             ),
+                            last_checked_at=case
+                              when enabled=false or last_refresh_status='failed' then null
+                              else last_checked_at
+                            end,
+                            last_refresh_status=case
+                              when enabled=false or last_refresh_status='failed' then 'pending'
+                              else last_refresh_status
+                            end,
+                            consecutive_failures=case
+                              when enabled=false or last_refresh_status='failed' then 0
+                              else consecutive_failures
+                            end,
+                            last_error_message=case
+                              when enabled=false or last_refresh_status='failed' then null
+                              else last_error_message
+                            end,
                             enabled=true
                         where id=%s
                         """,
