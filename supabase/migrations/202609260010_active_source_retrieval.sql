@@ -1,5 +1,5 @@
 -- Exclude superseded/disabled curated source registrations from RAG retrieval while
--- preserving their documents and chunks for provenance history and audit. Private
+-- preserving their documents and chunks for source history and audit. Private
 -- user documents have no source_registry_id and remain eligible.
 
 create or replace function public.hybrid_search_chunks(
