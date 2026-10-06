@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: provenance-free-rag-worker
+  group: citeral-free-rag-worker
   cancel-in-progress: false
 
 jobs:
@@ -97,7 +97,7 @@ jobs:
           token = os.environ["CLOUDFLARE_API_TOKEN"]
           model = os.environ["CLOUDFLARE_EMBEDDING_MODEL"]
           url = f"https://api.cloudflare.com/client/v4/accounts/{account}/ai/v1/embeddings"
-          body = json.dumps({"model": model, "input": "Provenance worker health check"}).encode()
+          body = json.dumps({"model": model, "input": "Citeral worker health check"}).encode()
           req = urllib.request.Request(
               url,
               data=body,
