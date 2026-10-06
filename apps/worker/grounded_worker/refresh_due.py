@@ -6,7 +6,7 @@ import psycopg
 from psycopg.rows import dict_row
 
 from .config import Settings
-from .source_refresh import refresh
+from .source_refresh import mark_source_failure, refresh
 
 _MAX_REFRESH_WORKERS = 4
 
@@ -16,6 +16,10 @@ def _refresh_one(source_id: str) -> tuple[str, str | None]:
         refresh(source_id)
         return source_id, None
     except Exception as exc:  # noqa: BLE001 - isolate each source refresh
+        try:
+            mark_source_failure(source_id, exc)
+        except Exception as health_error:  # noqa: BLE001 - health telemetry must not mask the source failure
+            return source_id, f"{exc}; additionally failed to record source health: {health_error}"
         return source_id, str(exc)
 
 
