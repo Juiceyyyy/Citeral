@@ -119,8 +119,8 @@
     },
     {
       "title": "Digital Personal Data Protection Act, 2023",
-      "canonical_url": "https://www.indiacode.nic.in/bitstream/123456789/22037/1/a2023-22.pdf",
-      "publisher": "India Code, Legislative Department, Government of India",
+      "canonical_url": "https://www.meity.gov.in/static/uploads/2024/02/Digital-Personal-Data-Protection-Act-2023.pdf",
+      "publisher": "Ministry of Electronics and Information Technology, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
@@ -180,6 +180,15 @@
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
+    },
+    {
+      "title": "Right to Information Act, 2005 - official DoPT overview",
+      "canonical_url": "https://rti.dopt.gov.in/aboutrti.html",
+      "publisher": "Department of Personnel and Training, Government of India",
+      "authority_level": "official",
+      "license_type": "official-government-source-review-required",
+      "refresh_interval_hours": 168,
+      "priority": 70
     }
   ]
 }
