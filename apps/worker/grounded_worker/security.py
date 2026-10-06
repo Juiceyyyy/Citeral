@@ -21,6 +21,7 @@ _BROWSER_COMPAT_ROOTS = {
     # India
     "cbic-gst.gov.in",
     "consumeraffairs.nic.in",
+    "dopt.gov.in",
     "egazette.gov.in",
     "incometax.gov.in",
     "incometaxindia.gov.in",
