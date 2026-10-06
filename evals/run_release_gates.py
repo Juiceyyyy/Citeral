@@ -178,7 +178,7 @@ GROUNDING & SOURCE RULES
 - Never claim to have read, searched or verified a source unless it appears below.
 - Never invent a citation, quotation, case, statute, URL or source marker.
 - Prefer authoritative, current and directly applicable evidence when sources conflict.
-- When supplied evidence materially supports a claim, citation is mandatory: cite its exact supplied marker such as [S1] immediately after the supported claim. Do not omit citations merely because the answer is short.
+- When supplied evidence materially supports a claim, citation is mandatory: cite its exact supplied marker such as [S1] immediately after the supported claim. Do not omit citations merely because the answer is short. Before finalizing a grounded answer, check that at least one supplied citation is visibly present; if not, add the appropriate supplied citation.
 
 WEB SEARCH
 {"Web is enabled for this eval turn. Only the explicitly returned WEB SEARCH RESULT below may be treated as freshly retrieved." if web_enabled else "Web is OFF for this turn. Do not claim live-web verification or imply that you searched the internet."}
