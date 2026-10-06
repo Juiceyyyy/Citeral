@@ -38,8 +38,8 @@ def main() -> None:
                    count(*) filter (where skb.enabled and s.last_refresh_status='queued') as queued_sources,
                    count(*) filter (where skb.enabled and s.last_refresh_status='unknown') as unknown_sources
             from public.knowledge_bases kb
-            join public.source_knowledge_bases skb on skb.knowledge_base_id=kb.id
-            join public.source_registry s on s.id=skb.source_registry_id
+            left join public.source_knowledge_bases skb on skb.knowledge_base_id=kb.id
+            left join public.source_registry s on s.id=skb.source_registry_id
             where kb.visibility='public' and kb.coverage_status in ('active','partial')
             group by kb.id,kb.name,kb.slug,kb.coverage_status
             order by kb.slug
