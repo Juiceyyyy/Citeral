@@ -37,6 +37,7 @@ _MIME_SUFFIXES = {
     "text/markdown": ".md",
     "text/csv": ".csv",
     "text/html": ".html",
+    "application/xhtml+xml": ".html",
     "image/png": ".png",
     "image/jpeg": ".jpg",
 }
