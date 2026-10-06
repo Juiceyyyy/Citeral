@@ -25,9 +25,7 @@ Do not remove a security warning merely to make a dashboard green. Fix the root 
 
 ## Tenant isolation
 
-`supabase/tests/tenant_isolation_live.sql` is a read-only production probe. It needs two existing auth users, impersonates each authenticated JWT database role in turn, and fails if directly user-owned records from the other account become visible.
-
-The test runs inside a transaction and rolls back.
+`supabase/tests/tenant_isolation_live.sql` creates two disposable identities and representative private assistant, knowledge, retrieval, chat, portfolio and Storage records inside a transaction. It impersonates each authenticated JWT role, proves cross-tenant reads and updates are blocked, proves scoped retrieval cannot leak private chunks, verifies the owner still has access, and rolls everything back.
 
 ## Abuse controls
 
@@ -43,7 +41,7 @@ Current defaults:
 - account export: 4 / hour
 - account deletion attempts: 3 / hour
 
-Vercel Hobby includes DDoS mitigation. Do not enable priced WAF/managed-rule features merely to harden the reference deployment; add them only as an explicit billing decision.
+Vercel Hobby includes DDoS mitigation and a limited free custom-WAF allowance. Application/database rate limits remain authoritative. Do not enable paid managed rules, Deep Analysis, or any feature that can create billable usage without an explicit billing decision.
 
 ## Account lifecycle
 

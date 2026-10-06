@@ -4,6 +4,12 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "23 */6 * * *"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/tests/**"
+      - ".github/workflows/production-smoke.yml"
 
 permissions:
   contents: read
@@ -21,7 +27,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for url in             https://citeral.vercel.app/api/health             https://citeral.vercel.app/             https://citeral.vercel.app/login             https://citeral.vercel.app/privacy             https://citeral.vercel.app/terms
+          for url in \
+            https://citeral.vercel.app/api/health \
+            https://citeral.vercel.app/ \
+            https://citeral.vercel.app/login \
+            https://citeral.vercel.app/privacy \
+            https://citeral.vercel.app/terms
           do
             curl --fail --silent --show-error --location --retry 3 --retry-all-errors --max-time 20 "$url" >/dev/null
           done
