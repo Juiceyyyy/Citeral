@@ -121,8 +121,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-border px-5 py-7 text-center text-[11px] text-subtle-foreground sm:text-xs">
-        Private workspaces · Versioned sources · Inline citations · Open source
+      <footer className="border-t border-border px-5 py-7 text-[11px] text-subtle-foreground sm:text-xs">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 sm:flex-row">
+          <span>Private workspaces · Versioned sources · Inline citations · Open source</span>
+          <span className="flex items-center gap-4">
+            <Link href="/privacy" className="transition hover:text-foreground">Privacy</Link>
+            <Link href="/terms" className="transition hover:text-foreground">Terms</Link>
+          </span>
+        </div>
       </footer>
     </main>
   );
