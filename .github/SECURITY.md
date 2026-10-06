@@ -12,4 +12,4 @@ Until the project publishes tagged stable releases, security fixes target the la
 
 ## Security boundaries
 
-Provenance treats the database/storage authorization layer as authoritative. LLM instructions are not an access-control mechanism.
+Citeral treats the database/storage authorization layer as authoritative. LLM instructions are not an access-control mechanism.
