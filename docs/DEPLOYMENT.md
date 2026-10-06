@@ -74,7 +74,7 @@ The free architecture trades immediate ingestion for cost: uploads may remain qu
 
 ## 4. Embeddings
 
-Both document chunks and user queries use Cloudflare Workers AI `@cf/baai/bge-m3` at exactly 1024 dimensions. The pgvector column is `vector(1024)` after migration `202609240008_cloudflare_embedding_space.sql`.
+Both document chunks and user queries use Cloudflare Workers AI `@cf/baai/bge-m3` at exactly 1024 dimensions. Production stores embeddings as `halfvec(1024)` after the later storage migration, while preserving the same embedding dimensionality and retrieval model.
 
 Do not mix embedding models in the same vector index. If the embedding model changes after indexing starts, re-embed every stored chunk and migrate the vector dimension when necessary before querying it with the new model.
 
