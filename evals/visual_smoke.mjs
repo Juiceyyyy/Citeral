@@ -61,7 +61,7 @@ try {
       }));
       record(
         layout.documentWidth <= layout.innerWidth + 1 && layout.bodyWidth <= layout.innerWidth + 1,
-        `${viewport.name} ${route}: horizontal overflow document=${layout.documentWidth}, viewport=${layout.innerWidth}`,
+        `${viewport.name} ${route}: no horizontal overflow (document=${layout.documentWidth}, viewport=${layout.innerWidth})`,
       );
 
       if (viewport.width <= 430) {
@@ -75,20 +75,20 @@ try {
             .map((element) => ({ tag: element.tagName, fontSize: Number.parseFloat(getComputedStyle(element).fontSize) }))
             .filter((entry) => entry.fontSize < 16),
         );
-        record(smallEditable.length === 0, `${viewport.name} ${route}: editable controls below 16px: ${JSON.stringify(smallEditable)}`);
+        record(smallEditable.length === 0, `${viewport.name} ${route}: mobile editable controls are at least 16px: ${JSON.stringify(smallEditable)}`);
       }
 
       if (route === "/qa/workspace") {
         const composer = page.locator("textarea").last();
         const composerBox = await composer.boundingBox();
-        record(Boolean(composerBox), `${viewport.name} workspace: composer is not visible`);
+        record(Boolean(composerBox), `${viewport.name} workspace: composer is visible`);
         if (composerBox) {
           record(
             composerBox.x >= -1 &&
               composerBox.x + composerBox.width <= viewport.width + 1 &&
               composerBox.y >= -1 &&
               composerBox.y + composerBox.height <= viewport.height + 1,
-            `${viewport.name} workspace: composer escapes viewport ${JSON.stringify(composerBox)}`,
+            `${viewport.name} workspace: composer stays inside viewport ${JSON.stringify(composerBox)}`,
           );
         }
 
@@ -97,13 +97,13 @@ try {
 
         if (viewport.width <= 430) {
           const navButton = page.getByRole("button", { name: "Open navigation" });
-          record((await navButton.count()) === 1, `${viewport.name} workspace: mobile navigation button missing`);
+          record((await navButton.count()) === 1, `${viewport.name} workspace: mobile navigation button is present`);
           if ((await navButton.count()) === 1) {
             await navButton.click();
             await page.getByRole("button", { name: "Close navigation" }).first().waitFor({ state: "visible" });
             const drawerWidth = await page.locator("aside").last().boundingBox().catch(() => null);
             if (drawerWidth) {
-              record(drawerWidth.width <= viewport.width, `${viewport.name} workspace: navigation drawer wider than viewport`);
+              record(drawerWidth.width <= viewport.width, `${viewport.name} workspace: navigation drawer fits viewport`);
             }
             await page.screenshot({ path: path.join(outputDir, `workspace-nav-${viewport.name}.png`), fullPage: false });
           }
@@ -114,7 +114,7 @@ try {
         await page.screenshot({ path: path.join(outputDir, `landing-${viewport.name}.png`), fullPage: true });
       }
 
-      record(consoleErrors.length === 0, `${viewport.name} ${route}: console/page errors: ${consoleErrors.join(" | ")}`);
+      record(consoleErrors.length === 0, `${viewport.name} ${route}: no console/page errors${consoleErrors.length ? `: ${consoleErrors.join(" | ")}` : ""}`);
       await page.close();
     }
   }
