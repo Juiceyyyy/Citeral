@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="apps/web/public/provenance-mark.png" alt="Provenance AI" width="112" />
+  <img src="apps/web/public/citeral-mark.png" alt="Citeral" width="112" />
 </p>
 
-<h1 align="center">Provenance AI</h1>
+<h1 align="center">Citeral</h1>
 
 <p align="center">
   Evidence-grounded AI assistants for private documents, curated knowledge and inspectable answers.
 </p>
 
 <p align="center">
-  <a href="https://provenance-ai-ind.vercel.app"><strong>Live app</strong></a>
+  <a href="https://citeral.vercel.app"><strong>Live app</strong></a>
   ·
   <a href="docs/ARCHITECTURE.md">Architecture</a>
   ·
@@ -26,9 +26,9 @@
   <img alt="Python" src="https://img.shields.io/badge/worker-Python-3776AB" />
 </p>
 
-## What is Provenance?
+## What is Citeral?
 
-Provenance is an open-source, multi-tenant RAG platform for specialized AI assistants that work from private files, maintained knowledge packs and optionally the live web.
+Citeral is an open-source, multi-tenant RAG platform for specialized AI assistants that work from private files, maintained knowledge packs and optionally the live web.
 
 The product is built around one principle: **important answers should be traceable back to the evidence used to produce them.**
 
@@ -45,20 +45,20 @@ Built-in assistants are provisioned automatically and are usable immediately. Th
 
 ## Knowledge model
 
-Provenance separates knowledge by scope instead of copying everything into every assistant.
+Citeral separates knowledge by scope instead of copying everything into every assistant.
 
 - **Shared curated knowledge** is stored once and can be linked to many assistants or knowledge packs.
 - **Assistant-private knowledge** contains uploads meant only for one assistant.
 - **Global user knowledge** can be made available across that user's assistants.
 - **Conversation attachments** remain scoped to the conversation that received them.
 - **Public canonical sources** are deduplicated so the same source can belong to multiple packs without duplicating its chunks and embeddings.
-- **Jurisdiction packs** attach from the user's saved country/region settings. Provenance does not silently infer a legal jurisdiction.
+- **Jurisdiction packs** attach from the user's saved country/region settings. Citeral does not silently infer a legal jurisdiction.
 
 This keeps authorization explicit while avoiding unnecessary storage duplication.
 
 ## RAG pipeline
 
-Provenance combines semantic and lexical retrieval rather than depending on embeddings alone.
+Citeral combines semantic and lexical retrieval rather than depending on embeddings alone.
 
 ```text
 User message
@@ -197,7 +197,7 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full design.
 ### Document ingestion worker
 
 - Python + Docling structural document processing
-- page, heading and table provenance retention
+- page, heading and table source-location retention
 - BGE-M3 multilingual embeddings
 - `FOR UPDATE SKIP LOCKED` job claiming
 - one-shot execution for scheduled GitHub Actions
