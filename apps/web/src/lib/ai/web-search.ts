@@ -62,7 +62,7 @@ export async function searchPublicWeb(query: string): Promise<{
       cache: "no-store",
       headers: {
         accept: "application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.1",
-        "user-agent": "Provenance-AI/1.0 (+https://provenance-ai-ind.vercel.app)",
+        "user-agent": "Citeral/1.0 (+https://citeral.vercel.app)",
       },
     });
 
