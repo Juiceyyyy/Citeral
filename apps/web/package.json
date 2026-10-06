@@ -17,7 +17,7 @@
     "@streamdown/math": "1.0.2",
     "@streamdown/mermaid": "1.0.2",
     "@supabase/ssr": "0.12.7",
-    "@supabase/supabase-js": "2.117.1",
+    "@supabase/supabase-js": "2.117.2",
     "ai": "7.0.113",
     "clsx": "2.1.1",
     "lucide-react": "1.47.0",
