@@ -180,7 +180,7 @@ function NavigationContent({
           </button>
         ) : (
           <>
-            <Link href="/app" onClick={onNavigate} aria-label="Provenance home">
+            <Link href="/app" onClick={onNavigate} aria-label="Citeral home">
               <BrandLockup priority markClassName="size-9" textClassName="text-[19px]" />
             </Link>
             {onClose ? (
@@ -300,7 +300,7 @@ export function Sidebar({ assistants, conversations, hasMoreConversations = fals
   const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setCollapsed(window.localStorage.getItem("provenance-sidebar-collapsed") === "1"));
+    const frame = window.requestAnimationFrame(() => setCollapsed(window.localStorage.getItem("citeral-sidebar-collapsed") === "1"));
     return () => window.cancelAnimationFrame(frame);
   }, []);
 
@@ -315,7 +315,7 @@ export function Sidebar({ assistants, conversations, hasMoreConversations = fals
   function toggleCollapsed() {
     setCollapsed((current) => {
       const next = !current;
-      window.localStorage.setItem("provenance-sidebar-collapsed", next ? "1" : "0");
+      window.localStorage.setItem("citeral-sidebar-collapsed", next ? "1" : "0");
       return next;
     });
   }
@@ -385,7 +385,7 @@ export function Sidebar({ assistants, conversations, hasMoreConversations = fals
       <div aria-hidden="true" className="h-14 lg:hidden" />
       <header className="liquid-glass-nav fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-white/[.07] px-3 lg:hidden">
         <button onClick={() => setOpen(true)} aria-label="Open navigation" className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-white/[.045] hover:text-foreground"><Menu className="size-5" /></button>
-        <Link href="/app" aria-label="Provenance home"><BrandLockup markClassName="size-8" textClassName="text-[17px]" /></Link>
+        <Link href="/app" aria-label="Citeral home"><BrandLockup markClassName="size-8" textClassName="text-[17px]" /></Link>
         <Link href="/app/bots/new" aria-label="New custom assistant" className="grid size-10 place-items-center rounded-xl text-muted-foreground hover:bg-white/[.045] hover:text-foreground"><Plus className="size-5" /></Link>
       </header>
 
