@@ -52,19 +52,22 @@ export async function GET() {
     const documentIds = ids(documentsResult.data);
     const portfolioIds = ids(portfoliosResult.data);
 
-    const [messagesResult, versionsResult, positionsResult] = await Promise.all([
+    const [messagesResult, versionsResult, chunksResult, positionsResult] = await Promise.all([
       conversationIds.length
         ? supabase.from("messages").select("*").in("conversation_id", conversationIds).order("conversation_id").order("position").limit(MAX_EXPORT_ROWS)
         : Promise.resolve({ data: [], error: null }),
       documentIds.length
         ? supabase.from("document_versions").select("id,document_id,version_number,content_hash,parser_version,status,extracted_text,error_message,created_at,processed_at").in("document_id", documentIds).order("document_id").order("version_number").limit(MAX_EXPORT_ROWS)
         : Promise.resolve({ data: [], error: null }),
+      documentIds.length
+        ? supabase.from("chunks").select("id,document_id,document_version_id,chunk_index,content,token_count,page_start,page_end,heading_path,metadata,created_at").in("document_id", documentIds).order("document_id").order("chunk_index").limit(MAX_EXPORT_ROWS)
+        : Promise.resolve({ data: [], error: null }),
       portfolioIds.length
         ? supabase.from("portfolio_positions").select("*").in("portfolio_id", portfolioIds).order("portfolio_id").limit(MAX_EXPORT_ROWS)
         : Promise.resolve({ data: [], error: null }),
     ]);
 
-    const childErrors = [messagesResult.error, versionsResult.error, positionsResult.error].filter(Boolean);
+    const childErrors = [messagesResult.error, versionsResult.error, chunksResult.error, positionsResult.error].filter(Boolean);
     if (childErrors.length) throw new Error(childErrors[0]?.message || "Could not export account data");
 
     const payload = {
@@ -83,16 +86,18 @@ export async function GET() {
       private_knowledge_bases: knowledgeBasesResult.data ?? [],
       documents: documentsResult.data ?? [],
       document_versions: versionsResult.data ?? [],
+      document_chunks: chunksResult.data ?? [],
       conversations: conversationsResult.data ?? [],
       messages: messagesResult.data ?? [],
       portfolios: portfoliosResult.data ?? [],
       portfolio_positions: positionsResult.data ?? [],
       usage_events: usageResult.data ?? [],
-      derived_data_note: "Vector embeddings and derived retrieval indexes are intentionally omitted from the portable export.",
+      derived_data_note: "Private document text is exported as retrieval chunks. Vector embeddings and internal search indexes are intentionally omitted.",
       truncation: {
         max_rows_per_collection: MAX_EXPORT_ROWS,
         messages: (messagesResult.data?.length ?? 0) >= MAX_EXPORT_ROWS,
         document_versions: (versionsResult.data?.length ?? 0) >= MAX_EXPORT_ROWS,
+        document_chunks: (chunksResult.data?.length ?? 0) >= MAX_EXPORT_ROWS,
         usage_events: (usageResult.data?.length ?? 0) >= MAX_EXPORT_ROWS,
       },
     };
