@@ -72,6 +72,9 @@ export default function SignupPage() {
         {message ? <p role="status" className="rounded-lg border border-border bg-surface-raised px-3 py-2 text-xs leading-5 text-[#c6cbd2]">{message}</p> : null}
         {error ? <p role="alert" className="rounded-lg border border-red-500/20 bg-red-500/[.06] px-3 py-2 text-xs leading-5 text-red-200">{error}</p> : null}
         <Button className="h-11 w-full" disabled={loading || confirmationSent}>{loading ? "Creating…" : confirmationSent ? "Confirmation sent" : "Create account"}</Button>
+        <p className="text-center text-[11px] leading-5 text-subtle-foreground">
+          By creating an account, you agree to the <Link href="/terms" className="text-muted-foreground underline decoration-border-strong underline-offset-2 hover:text-foreground">Terms</Link> and acknowledge the <Link href="/privacy" className="text-muted-foreground underline decoration-border-strong underline-offset-2 hover:text-foreground">Privacy notice</Link>.
+        </p>
         {confirmationSent ? (
           <button type="button" onClick={resendConfirmation} disabled={resending} className="w-full text-center text-xs text-muted-foreground transition hover:text-foreground disabled:opacity-50">
             {resending ? "Resending…" : "Didn't get it? Resend confirmation"}
