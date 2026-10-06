@@ -128,7 +128,7 @@ def import_manifest(path: str) -> None:
                               else last_checked_at
                             end,
                             last_refresh_status=case
-                              when enabled=false or last_refresh_status='failed' then 'pending'
+                              when enabled=false or last_refresh_status='failed' then 'unknown'
                               else last_refresh_status
                             end,
                             consecutive_failures=case
@@ -188,7 +188,7 @@ def import_manifest(path: str) -> None:
                                 enabled=true,
                                 last_checked_at=null,
                                 last_content_hash=null,
-                                last_refresh_status='pending',
+                                last_refresh_status='unknown',
                                 consecutive_failures=0,
                                 last_error_message=null
                             where id=%s
