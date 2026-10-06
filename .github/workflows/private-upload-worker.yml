@@ -131,6 +131,48 @@ jobs:
           raise SystemExit("ClamAV did not become ready")
           PY
 
+      - name: Verify ClamAV signature freshness
+        if: steps.config.outputs.ready == 'true'
+        shell: bash
+        run: |
+          python - <<'PY'
+          import socket
+          import time
+          from datetime import datetime, timezone
+
+          def command(payload: bytes) -> str:
+              with socket.create_connection(("127.0.0.1", 3310), timeout=5) as sock:
+                  sock.sendall(payload)
+                  data = bytearray()
+                  while True:
+                      chunk = sock.recv(4096)
+                      if not chunk:
+                          break
+                      data.extend(chunk)
+                      if b"\0" in chunk or b"\n" in chunk:
+                          break
+              return data.decode("utf-8", "replace").strip("\x00\r\n ")
+
+          print(f"ClamAV reload response: {command(b'zRELOAD\\0')}")
+          last = ""
+          for _ in range(24):
+              last = command(b"zVERSION\0")
+              parts = last.split("/", 2)
+              if len(parts) == 3:
+                  try:
+                      db_time = datetime.strptime(parts[2], "%a %b %d %H:%M:%S %Y").replace(tzinfo=timezone.utc)
+                  except ValueError:
+                      db_time = None
+                  if db_time is not None:
+                      age = datetime.now(timezone.utc) - db_time
+                      print(f"ClamAV loaded database age: {age.days} day(s) ({last})")
+                      if age.total_seconds() <= 7 * 24 * 60 * 60:
+                          raise SystemExit(0)
+              time.sleep(5)
+
+          raise SystemExit(f"ClamAV signatures are missing, unparsable or older than 7 days: {last}")
+          PY
+
       - name: Process queued private documents
         if: steps.config.outputs.ready == 'true'
         working-directory: apps/worker
