@@ -1,0 +1,15 @@
+# Citeral production ownership
+* @Juiceyyyy
+
+/.github/ @Juiceyyyy
+/apps/web/src/app/(auth)/ @Juiceyyyy
+/apps/web/src/app/api/ @Juiceyyyy
+/apps/web/src/lib/auth.ts @Juiceyyyy
+/apps/web/src/lib/security/ @Juiceyyyy
+/apps/web/src/lib/supabase/ @Juiceyyyy
+/apps/worker/ @Juiceyyyy
+/knowledge/manifests/ @Juiceyyyy
+/supabase/migrations/ @Juiceyyyy
+/supabase/tests/ @Juiceyyyy
+/docs/SECURITY.md @Juiceyyyy
+/docs/OPERATIONS.md @Juiceyyyy
