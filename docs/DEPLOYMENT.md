@@ -62,10 +62,13 @@ The workflow:
 
 1. Starts the official ClamAV container.
 2. Installs the Python/Docling worker.
-3. Waits until ClamAV is reachable.
-4. Attempts `grounded-refresh-due`; a failed external source refresh is recorded but does not block private-document ingestion.
-5. Runs `grounded-worker` in bounded one-shot mode.
-6. Reports a source-refresh failure after document processing, if applicable.
+3. Registers every maintained knowledge-pack manifest.
+4. Verifies Cloudflare embedding access and waits for ClamAV.
+5. Attempts `grounded-refresh-due`; individual unreachable external sources are recorded as degraded rather than silently accepted.
+6. Runs `grounded-worker` in bounded one-shot mode and drains the current curated/private ingestion batch.
+7. Cleans abandoned transient uploads.
+8. Runs `grounded-source-health`. Active/partial public packs must retain usable indexed evidence; stale ingestion jobs or a pack with no usable source fail the gate.
+9. Writes source-health and refresh warnings into the GitHub Actions job summary.
 
 The free architecture trades immediate ingestion for cost: uploads may remain queued until the next scheduled run.
 
@@ -116,6 +119,9 @@ If ClamAV is unavailable, ingestion must fail rather than parsing unscanned file
 ## 8. Go-live gates
 
 - GitHub CI passes typecheck, lint, Next.js production build, Ruff and pytest.
+- RAG release gates pass with no safety-critical failures and at least 90% overall score.
+- Responsive Chromium QA passes at the maintained phone, tablet, laptop and desktop breakpoints.
+- Curated source-health gate passes; degraded authoritative sources remain visible and affected packs stay marked partial.
 - Supabase security advisor has no unresolved security findings.
 - Auth signup/login/email/password-recovery flow verified on the production origin.
 - Upload -> scheduled worker -> ready -> retrieval -> citation flow verified with fixtures.
@@ -125,6 +131,15 @@ If ClamAV is unavailable, ingestion must fail rather than parsing unscanned file
 - `ALLOW_BILLABLE_AI=false` remains set in production.
 - Terms/privacy and professional-assistant disclosures are reviewed for launch jurisdictions.
 
-## 9. Scaling later
+## 9. Release-quality workflows
+
+Two additional free GitHub Actions workflows are part of the launch baseline:
+
+- `.github/workflows/rag-evals.yml` — model-scored grounding, privacy, citation, prompt-injection and jurisdiction release gates. It runs only on relevant changes, on a daily schedule, or manually.
+- `.github/workflows/visual-qa.yml` — real Chromium rendering at 360×800, 390×844, 768×1024, 1366×768 and 1920×1080, with screenshots retained as an artifact.
+
+The visual workspace route is build-only and returns 404 unless `CITERAL_QA_MODE=true` is explicitly set.
+
+## 10. Scaling later
 
 The free worker is intentionally not an always-on production queue consumer. If usage eventually justifies paid infrastructure, the same `FOR UPDATE SKIP LOCKED` worker can run as one or more long-lived replicas. That change should be an explicit deployment decision, not an automatic fallback.
