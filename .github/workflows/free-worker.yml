@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: citeral-free-rag-worker
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   worker:
