@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth";
 import { resolveUploadScope } from "@/lib/knowledge/scopes";
 import { isTrustedMutation } from "@/lib/security/request";
+import { assertRateAvailable } from "@/lib/security/rate-limit";
 
 const schema = z.object({
   scope: z.enum(["assistant", "global", "conversation"]).default("assistant"),
@@ -34,6 +35,8 @@ export async function POST(req: Request) {
   if (!isTrustedMutation(req)) return NextResponse.json({ error: "Cross-origin request rejected" }, { status: 403 });
   const { supabase, userId } = await requireApiUser();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try { await assertRateAvailable(supabase, "upload_finalize", 20, 60); }
+  catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Too many requests" }, { status: 429 }); }
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid document metadata" }, { status: 400 });
   const input = parsed.data;

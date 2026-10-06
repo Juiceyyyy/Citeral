@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireApiUser } from "@/lib/auth";
 import { resolveUploadScope } from "@/lib/knowledge/scopes";
 import { isTrustedMutation } from "@/lib/security/request";
+import { assertRateAvailable } from "@/lib/security/rate-limit";
 
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
 const allowed = new Set([
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
     if (!isTrustedMutation(req)) return NextResponse.json({ error: "Cross-origin request rejected" }, { status: 403 });
     const { supabase, userId } = await requireApiUser();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    await assertRateAvailable(supabase, "upload_prepare", 20, 60);
     const parsed = schema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) return NextResponse.json({ error: "Invalid upload request or file exceeds 50 MB" }, { status: 400 });
     if (!allowed.has(parsed.data.mimeType)) return NextResponse.json({ error: "Unsupported file type" }, { status: 415 });
@@ -66,6 +68,8 @@ export async function POST(req: Request) {
       scope: parsed.data.scope,
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not prepare upload" }, { status: 400 });
+    const message = error instanceof Error ? error.message : "Could not prepare upload";
+    const status = message.includes("Too many requests") ? 429 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }

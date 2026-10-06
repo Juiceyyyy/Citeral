@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="apps/web/public/citeral-mark.png" alt="Citeral" width="112" />
+  <img src="apps/web/public/citeral-mark.svg" alt="Citeral" width="112" />
 </p>
 
 <h1 align="center">Citeral</h1>

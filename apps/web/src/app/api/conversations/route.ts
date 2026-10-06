@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth";
 import { isTrustedMutation } from "@/lib/security/request";
+import { assertRateAvailable } from "@/lib/security/rate-limit";
 
 const createSchema = z.object({ botId: z.string().uuid() });
 const sidebarLimitSchema = z.coerce.number().int().min(1).max(50).catch(20);
@@ -60,6 +61,8 @@ export async function POST(req: Request) {
   if (!isTrustedMutation(req)) return NextResponse.json({ error: "Cross-origin request rejected" }, { status: 403 });
   const { supabase, userId } = await requireApiUser();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try { await assertRateAvailable(supabase, "conversation_create", 30, 60); }
+  catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Too many requests" }, { status: 429 }); }
   const parsed = createSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid conversation request" }, { status: 400 });
 

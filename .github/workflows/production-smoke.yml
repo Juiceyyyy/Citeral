@@ -1,0 +1,60 @@
+name: Production smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 */6 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: citeral-production-smoke
+  cancel-in-progress: true
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check public routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          for url in             https://citeral.vercel.app/api/health             https://citeral.vercel.app/             https://citeral.vercel.app/login             https://citeral.vercel.app/privacy             https://citeral.vercel.app/terms
+          do
+            curl --fail --silent --show-error --location --retry 3 --retry-all-errors --max-time 20 "$url" >/dev/null
+          done
+
+  database-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - name: Check database test configuration
+        id: config
+        shell: bash
+        run: |
+          if [[ -n "$DATABASE_URL" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DATABASE_URL is not configured; production RLS smoke test skipped."
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.config.outputs.ready == 'true'
+
+      - name: Install PostgreSQL client if needed
+        if: steps.config.outputs.ready == 'true'
+        shell: bash
+        run: |
+          if ! command -v psql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y postgresql-client
+          fi
+
+      - name: Run production RLS/security smoke test
+        if: steps.config.outputs.ready == 'true'
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_smoke.sql

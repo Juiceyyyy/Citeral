@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 22
           package-manager-cache: false
-      - run: npm install
+      - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build

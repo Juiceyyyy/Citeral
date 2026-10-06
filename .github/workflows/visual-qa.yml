@@ -41,7 +41,7 @@ jobs:
           package-manager-cache: false
 
       - name: Install application dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install browser driver without changing the lockfile
         run: npm install --no-save --package-lock=false --ignore-scripts playwright-core@1.55.0

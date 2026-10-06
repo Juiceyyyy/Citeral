@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireApiUser } from "@/lib/auth";
 import { isTrustedMutation } from "@/lib/security/request";
+import { assertRateAvailable } from "@/lib/security/rate-limit";
 
 const positionSchema=z.object({
   symbol:z.string().trim().max(40).optional(),name:z.string().trim().max(160),value:z.number().positive(),
@@ -24,6 +25,7 @@ export async function GET(){
 export async function POST(req:Request){if(!isTrustedMutation(req))return NextResponse.json({error:"Cross-origin request rejected"},{status:403});
   const {supabase,userId}=await requireApiUser();
   if(!userId)return NextResponse.json({error:"Unauthorized"},{status:401});
+  try{await assertRateAvailable(supabase,"portfolio_write",10,60);}catch(error){return NextResponse.json({error:error instanceof Error?error.message:"Too many requests"},{status:429});}
   const parsed=bodySchema.safeParse(await req.json().catch(()=>null));
   if(!parsed.success)return NextResponse.json({error:"Invalid portfolio",issues:parsed.error.flatten()},{status:400});
   const {data,error}=await supabase.rpc("replace_portfolio",{p_name:parsed.data.name,p_base_currency:parsed.data.baseCurrency,p_positions:parsed.data.positions});

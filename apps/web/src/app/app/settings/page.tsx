@@ -6,6 +6,7 @@ import { ensureBuiltinAssistantKnowledge } from "@/lib/bots/ensure-builtins";
 import { COUNTRIES, countryLabel } from "@/lib/geo/countries";
 import { PageHeader, PageShell, Surface, SectionHeading } from "@/components/app/page-shell";
 import { GlobalDocumentUpload } from "@/components/knowledge/global-document-upload";
+import { AccountActions } from "@/components/account/account-actions";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
@@ -92,6 +93,11 @@ export default async function SettingsPage() {
       <Surface className="mt-4 overflow-hidden">
         <div className="border-b border-border p-5 sm:p-6"><SectionHeading title="Global knowledge" description="Documents added here are indexed once and become retrievable by all of your assistants." aside={<span className="text-xs text-subtle-foreground">{globalDocumentCount ?? 0} document{globalDocumentCount === 1 ? "" : "s"}</span>} /></div>
         <div className="p-5 sm:p-6"><div className="mb-4 flex gap-3 rounded-lg border border-border bg-surface-soft p-3 text-xs leading-5 text-muted-foreground"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-subtle-foreground" /><span>Only place information here when you intentionally want it available across every assistant. Use an assistant Knowledge scope or a chat attachment for narrower access.</span></div><GlobalDocumentUpload /></div>
+      </Surface>
+
+      <Surface className="mt-4 overflow-hidden">
+        <div className="border-b border-border p-5 sm:p-6"><SectionHeading title="Account data" description="Download a portable copy of your Citeral data or permanently delete your account and private workspace data." /></div>
+        <div className="p-5 sm:p-6"><AccountActions /></div>
       </Surface>
 
       <div className="mt-4 border-t border-border px-1 pt-5"><h2 className="text-sm font-medium text-foreground">Privacy defaults</h2><p className="mt-2 max-w-3xl text-xs leading-5 text-muted-foreground">Assistant uploads stay assistant-scoped, global uploads are inherited by your assistants, and chat attachments remain limited to the conversation where they were attached. Retrieved document text is treated as evidence, never as executable instruction.</p></div>

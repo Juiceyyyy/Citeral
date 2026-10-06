@@ -7,6 +7,7 @@ import { webSearchTools } from "@/lib/ai/web-search";
 import { buildSystemPrompt, type BotRecord } from "@/lib/bots/system-prompt";
 import { retrieveChunks, chunksToContext, startQueryEmbedding, type RetrievalMetrics } from "@/lib/rag/retrieve";
 import { assertUsageAvailable } from "@/lib/security/usage";
+import { assertRateAvailable } from "@/lib/security/rate-limit";
 import { isTrustedMutation } from "@/lib/security/request";
 import { getPortfolioContext } from "@/lib/portfolio/server";
 import { env } from "@/lib/env";
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
     if (!isTrustedMutation(req)) return NextResponse.json({ error: "Cross-origin request rejected" }, { status: 403 });
     const { supabase, userId } = await requireApiUser();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    await assertRateAvailable(supabase, "chat", 30, 60);
 
     const declaredLength = Number(req.headers.get("content-length") || 0);
     if (declaredLength > 1_500_000) return NextResponse.json({ error: "Chat request too large" }, { status: 413 });
@@ -247,7 +249,7 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected chat error";
-    const status = message.includes("limit") ? 429 : 500;
+    const status = message.includes("limit") || message.includes("Too many requests") ? 429 : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

@@ -3,6 +3,29 @@
 begin;
 
 select 1 / case when exists(select 1 from pg_extension where extname='vector') then 1 else 0 end as vector_installed;
+
+select 1 / case when not exists(
+  select 1
+  from pg_class c
+  join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public' and c.relkind='r' and not c.relrowsecurity
+) then 1 else 0 end as all_public_tables_have_rls;
+
+select 1 / case when not exists(
+  select 1
+  from pg_class c
+  join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public'
+    and c.relkind='v'
+    and not (coalesce(c.reloptions,'{}'::text[]) @> array['security_invoker=true'])
+) then 1 else 0 end as all_public_views_are_security_invoker;
+
+select 1 / case when not exists(
+  select 1
+  from pg_proc p
+  join pg_namespace n on n.oid=p.pronamespace
+  where n.nspname='public' and p.prosecdef
+) then 1 else 0 end as no_public_security_definer_functions;
 select 1 / case when exists(select 1 from pg_policies where schemaname='public' and tablename='chunks') then 1 else 0 end as chunks_has_rls_policy;
 select 1 / case when exists(select 1 from pg_proc where proname='hybrid_search_chunks_scoped') then 1 else 0 end as scoped_retrieval_rpc_exists;
 select 1 / case when exists(select 1 from storage.buckets where id='documents' and public=false) then 1 else 0 end as private_storage_bucket;
@@ -12,6 +35,26 @@ select 1 / case when not exists(
   select 1 from information_schema.role_table_grants
   where grantee='authenticated' and table_schema='public' and table_name='daily_usage_counters' and privilege_type in ('INSERT','UPDATE','DELETE')
 ) then 1 else 0 end as quota_counter_not_client_mutable;
+
+select 1 / case when not exists(
+  select 1 from information_schema.role_table_grants
+  where grantee in ('anon','authenticated')
+    and table_schema='public'
+    and table_name='request_rate_counters'
+) then 1 else 0 end as rate_counter_not_client_accessible;
+
+select 1 / case when exists(
+  select 1 from pg_policies
+  where schemaname='public'
+    and tablename='request_rate_counters'
+    and policyname='request_rate_counters_deny_direct'
+) then 1 else 0 end as rate_counter_deny_policy_exists;
+
+select 1 / case when exists(
+  select 1 from pg_proc p
+  join pg_namespace n on n.oid=p.pronamespace
+  where n.nspname='public' and p.proname='list_own_document_storage_paths'
+) then 1 else 0 end as account_storage_listing_rpc_exists;
 
 select 1 / case when not exists(
   select 1 from information_schema.role_table_grants
