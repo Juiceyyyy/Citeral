@@ -2,12 +2,15 @@
   "pack": {
     "name": "India Tax & Corporate Reporting Core",
     "slug": "accounting-india-core",
-    "description": "Official India tax, GST, company-law and Ind AS Gazette sources plus current ICAI reference indexes. This is a maintained core pack and intentionally does not claim exhaustive tax or accounting-standard coverage.",
+    "description": "Official India tax, GST, company-law and Ind AS sources. Coverage is marked partial while some registered Gazette and statute sources remain unavailable to the automated ingestion worker; the pack does not claim exhaustive tax or accounting-standard coverage.",
     "kind": "jurisdiction",
-    "bot_types": ["accounting"],
+    "bot_types": [
+      "accounting"
+    ],
     "jurisdiction_country": "India",
     "jurisdiction_region": null,
-    "version": "2026.09"
+    "version": "2026.09",
+    "coverage_status": "partial"
   },
   "sources": [
     {
