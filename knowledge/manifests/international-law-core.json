@@ -4,8 +4,12 @@
     "slug": "international-law-core",
     "description": "Core international public-law references. International instruments are evidence of international obligations or principles and must not be presented as automatically incorporated into every country's domestic law.",
     "kind": "curated",
-    "domains": ["legal"],
-    "bot_types": ["legal"],
+    "domains": [
+      "legal"
+    ],
+    "bot_types": [
+      "legal"
+    ],
     "coverage_status": "partial",
     "jurisdiction_country": null,
     "jurisdiction_region": null,
@@ -22,8 +26,8 @@
     },
     {
       "title": "Universal Declaration of Human Rights",
-      "canonical_url": "https://www.ohchr.org/en/human-rights/universal-declaration/translations/english",
-      "publisher": "Office of the United Nations High Commissioner for Human Rights",
+      "canonical_url": "https://www.un.org/sites/un2.un.org/files/2021/03/udhr.pdf",
+      "publisher": "United Nations",
       "authority_level": "official",
       "license_type": "official-public-source-review-required",
       "refresh_interval_hours": 720
