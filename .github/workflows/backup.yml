@@ -72,9 +72,9 @@ jobs:
             pg_restore --list /backup/citeral.dump > restore.list
 
           test -s restore.list
-          grep -q "SCHEMA - public" restore.list
-          grep -q "TABLE DATA public" restore.list
-          echo "Logical backup archive is readable and contains the public application schema."
+          grep -Eq "TABLE DATA public profiles([[:space:]]|$)" restore.list
+          grep -Eq "TABLE DATA public documents([[:space:]]|$)" restore.list
+          echo "Logical backup archive is readable and contains core Citeral table data."
 
       - name: Encrypt backup
         if: steps.config.outputs.ready == 'true'
