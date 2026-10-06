@@ -28,6 +28,24 @@ ALLOWED_CONTENT_TYPES = {
 }
 
 
+def mark_source_failure(source_id: str, error: Exception | str) -> None:
+    settings = Settings.from_env()
+    message = str(error)[:4000]
+    with psycopg.connect(settings.database_url, row_factory=dict_row, autocommit=True) as conn:
+        conn.execute(
+            """
+            update public.source_registry
+            set last_checked_at=now(),
+                last_refresh_status='failed',
+                consecutive_failures=consecutive_failures+1,
+                last_error_message=%s
+            where id=%s
+            """,
+            (message, source_id),
+        )
+
+
+
 def refresh(source_id: str) -> None:
     settings = Settings.from_env()
     storage = create_client(settings.supabase_url, settings.supabase_service_role_key)
@@ -53,7 +71,15 @@ def refresh(source_id: str) -> None:
         digest = sha256(payload).hexdigest()
         if source["last_content_hash"] == digest:
             with conn.transaction():
-                conn.execute("update public.source_registry set last_checked_at=now() where id=%s", (source_id,))
+                conn.execute(
+                    """
+                    update public.source_registry
+                    set last_checked_at=now(),last_success_at=now(),last_refresh_status='ok',
+                        consecutive_failures=0,last_error_message=null
+                    where id=%s
+                    """,
+                    (source_id,),
+                )
                 conn.execute(
                     """
                     update public.documents d
@@ -154,7 +180,10 @@ def refresh(source_id: str) -> None:
                     (source["organization_id"], version_id),
                 )
                 conn.execute(
-                    "update public.source_registry set last_checked_at=now(),last_changed_at=now(),last_content_hash=%s where id=%s",
+                    """update public.source_registry
+                       set last_checked_at=now(),last_changed_at=now(),last_content_hash=%s,
+                           last_refresh_status='queued',last_error_message=null
+                       where id=%s""",
                     (digest, source_id),
                 )
         except Exception:
@@ -170,7 +199,12 @@ def refresh(source_id: str) -> None:
 def main() -> None:
     parser = ArgumentParser(description="Fetch a registered authoritative source and enqueue re-indexing")
     parser.add_argument("source_id")
-    refresh(parser.parse_args().source_id)
+    source_id = parser.parse_args().source_id
+    try:
+        refresh(source_id)
+    except Exception as exc:  # noqa: BLE001 - CLI boundary records source health before failing
+        mark_source_failure(source_id, exc)
+        raise
 
 
 if __name__ == "__main__":
