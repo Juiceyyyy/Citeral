@@ -56,6 +56,7 @@ def test_blocks_credentials_and_nonstandard_ports(monkeypatch: pytest.MonkeyPatc
     [
         "https://www.mha.gov.in/file.pdf",
         "https://dopt.gov.in/sites/default/files/RTI%20Act%202005%20%28Updated%29.PDF",
+        "https://dfpd.gov.in/WriteReadData/RtiUploadDocuments/rti.pdf",
         "https://subdomain.indiacode.nic.in/file.pdf",
         "https://www.un.org/en/about-us/universal-declaration-of-human-rights",
         "https://uscode.house.gov/download/download.shtml",
