@@ -202,7 +202,7 @@ def main() -> None:
     source_id = parser.parse_args().source_id
     try:
         refresh(source_id)
-    except Exception as exc:  # noqa: BLE001 - CLI boundary records source health before failing
+    except Exception as exc:
         mark_source_failure(source_id, exc)
         raise
 
