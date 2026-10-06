@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireApiUser } from "@/lib/auth";
 import { assertRateAvailable } from "@/lib/security/rate-limit";
+import { isTrustedMutation } from "@/lib/security/request";
 
 const MAX_EXPORT_ROWS = 10_000;
 
@@ -8,8 +9,9 @@ function ids(rows: Array<{ id: string }> | null | undefined) {
   return (rows ?? []).map((row) => row.id);
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    if (!isTrustedMutation(req)) return NextResponse.json({ error: "Cross-origin request rejected" }, { status: 403 });
     const { supabase, userId } = await requireApiUser();
     if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     await assertRateAvailable(supabase, "account_export", 4, 3600);
