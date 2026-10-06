@@ -3,7 +3,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Provenance", template: "%s · Provenance" },
+  title: { default: "Citeral", template: "%s · Citeral" },
   description: "Evidence-grounded AI assistants for documents, research, study and portfolio analysis.",
   icons: { icon: "/icon.png" },
 };
