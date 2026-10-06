@@ -112,6 +112,12 @@ where bucket_id='documents'
   and name=current_setting('citeral.test_org_a')||'/'||current_setting('citeral.test_user_a')||'/rls-private.txt';
 
 select 1 / case when count(*)=0 then 1 else 0 end
+from public.list_own_document_storage_paths()
+where path=current_setting('citeral.test_org_a')||'/'||current_setting('citeral.test_user_a')||'/rls-private.txt';
+
+select 1 / case when public.reserve_request_rate('tenant_probe',2,60)=1 then 1 else 0 end as user_b_rate_bucket_is_independent;
+
+select 1 / case when count(*)=0 then 1 else 0 end
 from public.hybrid_search_chunks_scoped(
   current_setting('citeral.test_bot')::uuid,
   null,
@@ -142,6 +148,14 @@ select 1 / case when count(*)=1 then 1 else 0 end
 from storage.objects
 where bucket_id='documents'
   and name=current_setting('citeral.test_org_a')||'/'||current_setting('citeral.test_user_a')||'/rls-private.txt';
+
+select 1 / case when count(*)=1 then 1 else 0 end
+from public.list_own_document_storage_paths()
+where path=current_setting('citeral.test_org_a')||'/'||current_setting('citeral.test_user_a')||'/rls-private.txt';
+
+select 1 / case when public.reserve_request_rate('tenant_probe',2,60)=1 then 1 else 0 end as user_a_rate_first;
+select 1 / case when public.reserve_request_rate('tenant_probe',2,60)=2 then 1 else 0 end as user_a_rate_second;
+
 select 1 / case when count(*)=1 then 1 else 0 end
 from public.hybrid_search_chunks_scoped(
   current_setting('citeral.test_bot')::uuid,
