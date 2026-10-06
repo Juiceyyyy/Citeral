@@ -12,7 +12,7 @@ def test_source_enabled_accepts_explicit_false():
 def test_source_enabled_rejects_non_boolean():
     try:
         _source_enabled({"title": "A", "enabled": "false"})
-    except ValueError as exc:
+    except TypeError as exc:
         assert "must be a boolean" in str(exc)
     else:
-        raise AssertionError("Expected ValueError")
+        raise AssertionError("Expected TypeError")

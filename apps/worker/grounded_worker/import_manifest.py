@@ -17,7 +17,7 @@ _ALLOWED_COVERAGE = {"active", "partial", "planned", "deprecated"}
 def _source_enabled(source: dict[str, object]) -> bool:
     value = source.get("enabled", True)
     if not isinstance(value, bool):
-        raise ValueError(f"Source enabled must be a boolean: {source.get('title', 'unknown source')}")
+        raise TypeError(f"Source enabled must be a boolean: {source.get('title', 'unknown source')}")
     return value
 
 
