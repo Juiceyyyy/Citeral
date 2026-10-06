@@ -59,7 +59,7 @@ export function OAuthButtons() {
             className="flex h-11 items-center justify-center gap-2.5 rounded-lg border border-border bg-surface-raised px-3 text-sm font-medium text-[#e2e5e9] transition hover:border-border-strong hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 disabled:cursor-not-allowed disabled:opacity-45"
           >
             {provider.icon}
-            <span>{busy === provider.id ? "Connecting…" : `Continue with ${provider.label}`}</span>
+            <span>{busy === provider.id ? "Connecting…" : provider.label}</span>
           </button>
         ))}
       </div>
