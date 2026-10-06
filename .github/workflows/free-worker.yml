@@ -9,7 +9,7 @@ on:
       - "apps/worker/**"
       - ".github/workflows/free-worker.yml"
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "17 * * * *"
 
 permissions:
   contents: read
