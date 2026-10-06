@@ -12,6 +12,7 @@ Required web environment variables:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` — production-only server secret used for irreversible account deletion cleanup; never expose it with a `NEXT_PUBLIC_` prefix and do not copy it to preview deployments unless preview points to an isolated Supabase project.
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_AI_MODEL=@cf/zai-org/glm-4.7-flash`
@@ -31,6 +32,7 @@ Set Root Directory to `apps/web` and configure:
 ```text
 NEXT_PUBLIC_SUPABASE_URL=<project URL>
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
+SUPABASE_SERVICE_ROLE_KEY=<production service-role key>
 CLOUDFLARE_ACCOUNT_ID=<Cloudflare Account ID>
 CLOUDFLARE_API_TOKEN=<Workers AI API token>
 CLOUDFLARE_AI_MODEL=@cf/zai-org/glm-4.7-flash
@@ -43,6 +45,12 @@ MAX_RAG_CHUNKS=10
 Set `NEXT_PUBLIC_APP_URL` to the production Vercel origin after the first deployment if the application route needs it.
 
 Keep Vercel AI Gateway/OpenAI credentials unset for the zero-cost deployment.
+
+### Hobby firewall
+
+Vercel Hobby includes a limited WAF allowance. After opening **Project → Firewall → Configure** once, create one conservative rate-limit rule for `/api/` traffic (for example 120 requests per 60 seconds per IP). Keep the application/database per-user limits authoritative; the edge rule is only coarse burst protection.
+
+Do not enable paid managed rulesets, BotID Deep Analysis or any other feature that requires an explicit paid-plan decision.
 
 ## 3. Free ingestion worker: GitHub Actions
 
@@ -93,7 +101,7 @@ A source registry is not a claim of exhaustive legal/tax coverage. Review author
 Because the app uses cookie-based SSR auth, configure the Confirm signup email template to send the token hash to the app route:
 
 ```text
-{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/app
+{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/app
 ```
 
 Set Supabase Auth Site URL to the production web origin and deliberately allow-list preview/local redirect URLs.
@@ -101,7 +109,7 @@ Set Supabase Auth Site URL to the production web origin and deliberately allow-l
 For password reset use:
 
 ```text
-{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password
+{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password
 ```
 
 Verify the full email -> `/auth/confirm` -> authenticated application flow before launch.
