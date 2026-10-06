@@ -2,7 +2,7 @@
 
 ## Our standard
 
-Provenance AI contributors are expected to keep project spaces respectful, constructive and welcoming. Discuss ideas and code without personal attacks, harassment, discrimination, threats or deliberate disruption.
+Citeral contributors are expected to keep project spaces respectful, constructive and welcoming. Discuss ideas and code without personal attacks, harassment, discrimination, threats or deliberate disruption.
 
 ## Scope
 
