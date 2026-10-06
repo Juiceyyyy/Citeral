@@ -210,6 +210,8 @@ See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the full design.
 - fail-closed ClamAV support
 - shared curated/jurisdiction manifest importer
 - scheduled source registration and refresh
+- persisted authoritative-source health and degraded-source reporting
+- source-health release gate that prevents empty public packs from passing silently
 - transient raw private uploads after processing
 
 ### Portfolio assistant
@@ -371,6 +373,8 @@ cd apps/worker
 ruff check .
 pytest
 ```
+
+Release-quality automation also includes model-scored RAG/safety gates and real Chromium responsive QA across phone, tablet, laptop and desktop breakpoints. See [`docs/EVALS.md`](docs/EVALS.md).
 
 ## Deployment
 
