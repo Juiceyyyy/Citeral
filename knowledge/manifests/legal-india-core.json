@@ -71,8 +71,8 @@
     },
     {
       "title": "Companies Act, 2013",
-      "canonical_url": "https://www.mca.gov.in/Ministry/pdf/CompaniesAct2013.pdf",
-      "publisher": "India Code, Legislative Department, Government of India",
+      "canonical_url": "https://www.mca.gov.in/content/dam/mca/pdf/CompaniesAct2013.pdf",
+      "publisher": "Ministry of Corporate Affairs, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
@@ -167,8 +167,8 @@
     },
     {
       "title": "Right to Information Act, 2005",
-      "canonical_url": "https://www.indiacode.nic.in/indiacode/handle/123456789/13072?view_type=browse",
-      "publisher": "India Code / National Informatics Centre",
+      "canonical_url": "https://dopt.gov.in/sites/default/files/RTI%20Act%202005%20%28Updated%29.PDF",
+      "publisher": "Department of Personnel and Training, Government of India",
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
@@ -180,15 +180,6 @@
       "authority_level": "official",
       "license_type": "official-government-source-review-required",
       "refresh_interval_hours": 168
-    },
-    {
-      "title": "Right to Information Act, 2005 - official DoPT overview",
-      "canonical_url": "https://rti.dopt.gov.in/aboutrti.html",
-      "publisher": "Department of Personnel and Training, Government of India",
-      "authority_level": "official",
-      "license_type": "official-government-source-review-required",
-      "refresh_interval_hours": 168,
-      "priority": 70
     }
   ]
 }
