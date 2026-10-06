@@ -63,7 +63,7 @@ def claim_job(conn: psycopg.Connection[Any], worker_id: str) -> dict[str, Any] |
             """
             select j.id, j.document_version_id, j.attempts, j.max_attempts, j.job_type,
                    v.document_id, v.storage_path, d.knowledge_base_id, d.organization_id,
-                   d.owner_user_id, d.title, d.mime_type
+                   d.owner_user_id, d.title, d.mime_type, d.source_registry_id
             from public.ingestion_jobs j
             join public.document_versions v on v.id=j.document_version_id
             join public.documents d on d.id=v.document_id
@@ -355,6 +355,15 @@ def process_job(
             """,
             (Jsonb({"chunks": len(chunks), "processed_bytes": processed_bytes, "sha256": binary_hash, "parser_version": parser_version}), job["id"]),
         )
+        if job.get("source_registry_id"):
+            conn.execute(
+                """
+                update public.source_registry
+                set last_refresh_status='ok',last_success_at=now(),consecutive_failures=0,last_error_message=null
+                where id=%s
+                """,
+                (job["source_registry_id"],),
+            )
     _cleanup_raw_storage(conn, storage, job)
     LOG.info("Indexed %s: %d chunks", job["title"], len(chunks))
 
@@ -380,6 +389,16 @@ def fail_job(conn: psycopg.Connection[Any], job: dict[str, Any], error: Exceptio
             "update public.documents set status=%s where id=%s",
             ("failed" if terminal else "queued", job["document_id"]),
         )
+        if terminal and job.get("source_registry_id"):
+            conn.execute(
+                """
+                update public.source_registry
+                set last_refresh_status='failed',consecutive_failures=consecutive_failures+1,
+                    last_error_message=%s
+                where id=%s
+                """,
+                (message, job["source_registry_id"]),
+            )
     LOG.exception("Ingestion failed for %s: %s", job.get("title"), message)
     return terminal
 
