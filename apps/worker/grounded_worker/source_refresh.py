@@ -29,6 +29,12 @@ ALLOWED_CONTENT_TYPES = {
 }
 
 
+def _normalized_content_type(content_type: str) -> str:
+    # Supabase Storage's documents bucket accepts text/html. XHTML from
+    # legislation.gov.uk is semantically HTML and is parsed through the same path.
+    return "text/html" if content_type == "application/xhtml+xml" else content_type
+
+
 def mark_source_failure(source_id: str, error: Exception | str) -> None:
     settings = Settings.from_env()
     message = str(error)[:4000]
@@ -120,6 +126,7 @@ def refresh(source_id: str) -> None:
             content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
         if content_type not in ALLOWED_CONTENT_TYPES:
             raise RuntimeError(f"Unsupported curated source content type: {content_type}")
+        content_type = _normalized_content_type(content_type)
 
         storage_path = f"curated/{source['knowledge_base_id']}/{uuid4()}-{filename[:160]}"
         storage.storage.from_("documents").upload(
