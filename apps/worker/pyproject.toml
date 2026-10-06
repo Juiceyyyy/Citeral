@@ -1,7 +1,7 @@
 [project]
 name = "grounded-rag-worker"
 version = "1.0.0"
-description = "Document ingestion and indexing worker for Provenance AI"
+description = "Document ingestion and indexing worker for Citeral"
 requires-python = ">=3.12,<3.16"
 dependencies = [
   "docling==2.130.0",
