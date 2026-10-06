@@ -58,3 +58,7 @@ jobs:
       - name: Run production RLS/security smoke test
         if: steps.config.outputs.ready == 'true'
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/rls_smoke.sql
+
+      - name: Run live two-user tenant isolation probe
+        if: steps.config.outputs.ready == 'true'
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/tenant_isolation_live.sql
