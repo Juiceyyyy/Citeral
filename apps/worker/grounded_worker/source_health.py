@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from collections import defaultdict
 from dataclasses import dataclass
-from datetime import timedelta
 
 import psycopg
 from psycopg.rows import dict_row
