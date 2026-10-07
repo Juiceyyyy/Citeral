@@ -8,6 +8,8 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/backup.yml"
+      - ".github/backup-public-key.asc"
+      - ".github/backup-key-fingerprint.txt"
 
 permissions:
   contents: read
@@ -22,31 +24,27 @@ jobs:
     timeout-minutes: 25
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+      BACKUP_RECIPIENT_FPR: "28FB5DFF2F126CEF2802E8BA4D4D1B870FDD43F7"
 
     steps:
+      - uses: actions/checkout@v7
+
       - name: Check backup configuration
-        id: config
         shell: bash
         run: |
+          set -euo pipefail
           if [[ -z "$DATABASE_URL" ]]; then
-            echo "database=false" >> "$GITHUB_OUTPUT"
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::DATABASE_URL is not configured; encrypted backup skipped."
-            exit 0
+            echo "::error::DATABASE_URL is not configured; no recoverable production backup can be created."
+            exit 1
           fi
 
-          echo "database=true" >> "$GITHUB_OUTPUT"
-
-          if [[ -n "$BACKUP_PASSPHRASE" ]]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::BACKUP_PASSPHRASE is not configured. The dump will be created and validated, but no backup artifact will be persisted."
+          expected="$(tr -d '[:space:]' < .github/backup-key-fingerprint.txt)"
+          if [[ "$expected" != "$BACKUP_RECIPIENT_FPR" ]]; then
+            echo "::error::Backup public-key fingerprint mismatch."
+            exit 1
           fi
 
       - name: Create compressed logical backup with PostgreSQL 17
-        if: steps.config.outputs.database == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -61,7 +59,6 @@ jobs:
           test -s citeral.dump
 
       - name: Validate backup archive with PostgreSQL 17
-        if: steps.config.outputs.database == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -76,13 +73,29 @@ jobs:
           grep -Eq "TABLE DATA public documents([[:space:]]|$)" restore.list
           echo "Logical backup archive is readable and contains core Citeral table data."
 
-      - name: Encrypt backup
-        if: steps.config.outputs.ready == 'true'
+      - name: Verify backup recipient key
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GNUPGHOME="$RUNNER_TEMP/citeral-backup-gnupg"
+          mkdir -p "$GNUPGHOME"
+          chmod 700 "$GNUPGHOME"
+
+          gpg --batch --import .github/backup-public-key.asc
+
+          imported="$(gpg --batch --with-colons --fingerprint "$BACKUP_RECIPIENT_FPR" | awk -F: '$1=="fpr"{print $10; exit}')"
+          if [[ "$imported" != "$BACKUP_RECIPIENT_FPR" ]]; then
+            echo "::error::Imported backup key fingerprint did not match the pinned recovery fingerprint."
+            exit 1
+          fi
+
+      - name: Encrypt backup to offline recovery key
         id: encrypt
         shell: bash
         run: |
           set -euo pipefail
           umask 077
+          export GNUPGHOME="$RUNNER_TEMP/citeral-backup-gnupg"
 
           stamp="$(date -u +%Y%m%dT%H%M%SZ)"
           name="citeral-${stamp}.dump.gpg"
@@ -90,29 +103,20 @@ jobs:
           gpg \
             --batch \
             --yes \
-            --pinentry-mode loopback \
-            --passphrase "$BACKUP_PASSPHRASE" \
-            --symmetric \
-            --cipher-algo AES256 \
+            --trust-model always \
+            --recipient "$BACKUP_RECIPIENT_FPR" \
             --output "$name" \
+            --encrypt \
             citeral.dump
 
-          gpg \
-            --batch \
-            --yes \
-            --pinentry-mode loopback \
-            --passphrase "$BACKUP_PASSPHRASE" \
-            --output /tmp/citeral-verify.dump \
-            --decrypt "$name"
-
-          cmp --silent citeral.dump /tmp/citeral-verify.dump
+          test -s "$name"
+          gpg --batch --list-packets "$name" >/dev/null
           sha256sum "$name" > "$name.sha256"
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
-          rm -f citeral.dump /tmp/citeral-verify.dump restore.list
+          rm -f citeral.dump restore.list
 
       - name: Upload encrypted backup
-        if: steps.config.outputs.ready == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: citeral-db-backup-${{ github.run_id }}
@@ -123,7 +127,9 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
-      - name: Remove plaintext dump
+      - name: Remove plaintext material
         if: always()
         shell: bash
-        run: rm -f citeral.dump /tmp/citeral-verify.dump restore.list
+        run: |
+          rm -f citeral.dump restore.list
+          rm -rf "$RUNNER_TEMP/citeral-backup-gnupg"

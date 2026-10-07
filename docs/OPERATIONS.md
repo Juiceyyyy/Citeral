@@ -6,37 +6,38 @@ This runbook applies to the reference deployment at `citeral.vercel.app`. It pre
 
 Workflow: `.github/workflows/backup.yml`
 
-The workflow creates a compressed PostgreSQL custom-format dump using the existing `DATABASE_URL`, validates that the archive is readable, encrypts it with AES-256 through GnuPG, decrypts a temporary copy to verify the ciphertext, and uploads only the encrypted artifact.
+The workflow creates a compressed PostgreSQL custom-format dump using the existing `DATABASE_URL`, validates that the archive is readable, imports the repository's dedicated **public** backup key, encrypts the dump to that key, validates the encrypted packet, and uploads only the encrypted artifact.
+
+The public repository contains only the public encryption key. The corresponding private recovery key must be kept offline by the deployment operator and must never be committed to GitHub, added to Vercel/Supabase environment variables, or uploaded as an Actions artifact.
+
+Pinned recovery-key fingerprint:
+
+`28FB5DFF2F126CEF2802E8BA4D4D1B870FDD43F7`
 
 The public repository must never receive a plaintext database dump.
-
-### Required secret
-
-Create one repository Actions secret manually:
-
-- `BACKUP_PASSPHRASE`: a long random passphrase used only for backup encryption.
-
-Do not reuse the Supabase password, GitHub token, OAuth secret, or any application API key.
-
-The workflow deliberately remains non-destructive when this secret is missing: it validates that a dump can be produced but does not persist a backup artifact.
 
 Encrypted artifacts are retained for three days to stay within GitHub Actions free artifact storage limits. This is a short recovery window, not an enterprise backup SLA.
 
 ## Restore procedure
 
 1. Download an encrypted `citeral-*.dump.gpg` artifact and its `.sha256` file from the corresponding successful backup workflow run.
-2. Verify the checksum:
+2. On an offline/admin machine, import the dedicated private recovery key.
+3. Confirm its fingerprint is exactly:
+   `28FB5DFF2F126CEF2802E8BA4D4D1B870FDD43F7`
+4. Verify the checksum:
    `sha256sum -c citeral-*.dump.gpg.sha256`
-3. Decrypt locally:
+5. Decrypt locally:
    `gpg --output citeral.dump --decrypt citeral-*.dump.gpg`
-4. Inspect before restoring:
+6. Inspect before restoring:
    `pg_restore --list citeral.dump > restore.list`
-5. Restore into a disposable PostgreSQL/Supabase test environment first. Never perform the first restore attempt directly against production.
-6. Run:
+7. Restore into a disposable PostgreSQL/Supabase test environment first. Never perform the first restore attempt directly against production.
+8. Run:
    - `supabase/tests/rls_smoke.sql`
    - `supabase/tests/tenant_isolation_live.sql`
    - application health and auth smoke tests
-7. Only after the test restore passes should the dump be used for a production recovery.
+9. Only after the test restore passes should the dump be used for a production recovery.
+
+If the private recovery key is lost, existing encrypted backup artifacts are intentionally unrecoverable. Keep at least two secure offline copies under the operator's control.
 
 A managed Supabase Free project does not provide the same backup/RPO guarantees as a paid production plan. This workflow is the zero-cost reference deployment's compensating control.
 
@@ -47,7 +48,7 @@ A managed Supabase Free project does not provide the same backup/RPO guarantees 
 - Vercel preview deployments are disabled on the reference project to conserve Hobby deployment quota.
 - Never enable a paid build machine, paid AI provider, paid Supabase feature, or paid integration without an explicit billing decision.
 - `ALLOW_BILLABLE_AI` must remain absent or `false` on the free reference deployment.
-- The public `/api/health` endpoint reports `billing_mode: free-only` once the current health contract is deployed.
+- The public `/api/health` endpoint reports `billing_mode: free-only` on the hardened production contract.
 
 ## Incident response
 
