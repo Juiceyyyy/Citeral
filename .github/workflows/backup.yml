@@ -110,7 +110,7 @@ jobs:
             citeral.dump
 
           test -s "$name"
-          gpg --batch --list-packets "$name" >/dev/null
+          gpg --batch --list-only --list-packets "$name" >/dev/null
           sha256sum "$name" > "$name.sha256"
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
